@@ -1,0 +1,8 @@
+# Files
+**/.env
+
+# Folders
+**/__pycache__/
+
+# Ending file
+*.log
