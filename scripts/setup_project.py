@@ -15,7 +15,7 @@ def _setup_env_file(env_path: str = "../.env"):
     env_content = f"""# OpenAI API Configuration
 OPENAI_API_KEY         =
 OPENAI_URL             =
-OPENAI_DEPLOYMENT_NAME =
+OPENAI_QNA_MODEL       =
 
 # App Configuration
 APP_FRONTEND_URL       = http://localhost:8501/
