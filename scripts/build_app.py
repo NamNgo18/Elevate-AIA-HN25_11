@@ -7,6 +7,8 @@ import subprocess
 
 from dotenv     import load_dotenv
 
+__all__ = []
+
 # ========================================
 #           Configure env
 # ========================================
