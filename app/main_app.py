@@ -1,9 +1,8 @@
 from fastapi                  import  FastAPI
 from fastapi.middleware.cors  import  CORSMiddleware
 
-from dotenv     import load_dotenv
+from dotenv                     import  load_dotenv
 from app.utilities.log_manager  import  LoggingManager
-from app.routes.speech          import  router          as  speech_router
 
 # ========================================
 #           setup config
@@ -19,6 +18,9 @@ def _setup_confg() -> None:
 def _setup_api(app: FastAPI = None) -> None:
     if not app:
         raise RuntimeError("Unable to identify the FAST application..")
+
+    # Import routers
+    from app.routes.speech  import  router  as  speech_router
 
     # Setup CORS to allow Streamlit frontend to call backend
     app.add_middleware(
