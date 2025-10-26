@@ -16,10 +16,12 @@ def _check_tool_installed(tool_name: str) -> bool:
 
 def _run_command(cmd_in: str = "", cwd = None):
     """Run a shell command and stream its output (raises on failure)."""
-    cmd = ' '.join(str(i) for i in cmd_in)
-    print(f"\n✅ Running: {cmd} (cwd = {cwd or Path.cwd()})")
+    # Join the command into a string *only* for printing
+    cmd_str_for_printing = ' '.join(str(i) for i in cmd_in)
+    print(f"\n✅ Running: {cmd_str_for_printing} (cwd = {cwd or Path.cwd()})")
     try:
-        subprocess.run(cmd, cwd = cwd, check = True)
+        # Pass the original list 'cmd_in' to subprocess.run
+        subprocess.run(cmd_in, cwd = cwd, check = True)
         print("✅ Command finished successfully!")
     except subprocess.CalledProcessError as e:
         print(f"❌ Command failed: {e}")
