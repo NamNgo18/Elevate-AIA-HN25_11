@@ -8,3 +8,4 @@ PyMuPDF
 pytesseract
 python-multipart
 SpeechRecognition
+gTTS
