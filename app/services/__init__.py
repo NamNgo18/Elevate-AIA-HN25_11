@@ -1,1 +1,1 @@
-from .speech_convertor import *
+from . import speech_convertor

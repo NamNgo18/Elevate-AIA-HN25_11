@@ -1,37 +1,42 @@
 import uuid
-import speech_recognition as srecognizer
+import speech_recognition    as srecognizer
 
-# from gtts import gTTS
-from pathlib                 import Path
-from ..utilities.log_manager import LoggingManager
-
-# ========================================
-__all__ = ["tts_generation", "stt_generation", "unlink_audio"]
+from gtts                       import gTTS
+from pathlib                    import Path
+from ..utilities.log_manager    import LoggingManager
 
 # ========================================
-def tts_generation(metadata: dict = None) -> str:
+__all__ = ["generate_tts", "generate_stt", "unlink_audio_file"]
+
+# ========================================
+def generate_tts(metadata: dict = None) -> str:
     '''
     Convert text to speech and save to a unique file.
     '''
     app_logger = LoggingManager().get_logger("AppLogger")
     if not metadata or not isinstance(metadata, dict):
-        app_logger.info(f"Not provided the text to convert!")
+        app_logger.error(f"Not provided the text to convert!")
         return None
 
-    audio_file_nm = f"{Path(__file__).resolve().parents[2]}/audio_QnA_{uuid.uuid4().version}.mp3"
-    tts = gTTS(text = metadata.get("text", None), lang = metadata.get("lang", "en"))
-    tts.save(audio_file_nm)
-    app_logger.info(f"Audio saved as: {audio_file_nm}")
+    try:
+        audio_file_nm = f"{Path(__file__).resolve().parents[2]}/data/audio/audio_QnA_{uuid.uuid4().hex[-8:]}.mp3"
+        tts = gTTS(text = metadata.get("text", None), lang = metadata.get("lang", "en"))
+        tts.save(audio_file_nm)
+        app_logger.info(f"Audio saved as: {audio_file_nm}")
+    except Exception as e:
+        app_logger.critical(f"An error occurred: {e}")
+        return None
+
     return audio_file_nm
 
 # ========================================
-def stt_generation(audio_link: str = None) -> str:
+def generate_stt(audio_link: str = None) -> str:
     '''
     Convert speech (audio file) to text. The audio file recommanded to be in WAV format.
     '''
     app_logger = LoggingManager().get_logger("AppLogger")
     if not audio_link or not isinstance(audio_link, str):
-        app_logger.info(f"Not provided the audio_link!")
+        app_logger.error(f"Not provided the audio_link!")
         return None
 
     try:
@@ -58,7 +63,7 @@ def stt_generation(audio_link: str = None) -> str:
     return None
 
 # ========================================
-def unlink_audio(audio_link: str = None) -> bool:
+def unlink_audio_file(audio_link: str = None) -> bool:
     """Delete the specified file."""
     app_logger = LoggingManager().get_logger("AppLogger")
     if not audio_link or not isinstance(audio_link, str):
@@ -74,6 +79,9 @@ def unlink_audio(audio_link: str = None) -> bool:
         app_logger.info(f"Deleted file: {audio_link}")
     except FileNotFoundError:
         app_logger.critical(f"Already deleted or unavailable: {audio_link}")
+        return False
+    except Exception as e:
+        app_logger.critical(f"An error occurred: {e}")
         return False
 
     return True
