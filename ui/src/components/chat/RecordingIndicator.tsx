@@ -8,27 +8,27 @@ export function RecordingIndicator() {
     const interval = setInterval(() => {
       setBars(Array.from({ length: 5 }, () => Math.random() * 100));
     }, 150);
-    
+
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <div className="flex items-center gap-3 px-4 py-2 bg-destructive/10 border border-destructive/20 rounded-lg">
+    <div className="bg-destructive/10 border-destructive/20 flex items-center gap-3 rounded-lg border px-4 py-2">
       {/* Pulsing red dot */}
       <div className="relative flex items-center justify-center">
-        <div className="absolute h-3 w-3 bg-destructive rounded-full animate-ping opacity-75" />
-        <div className="relative h-2 w-2 bg-destructive rounded-full" />
+        <div className="bg-destructive absolute h-3 w-3 animate-ping rounded-full opacity-75" />
+        <div className="bg-destructive relative h-2 w-2 rounded-full" />
       </div>
-      
+
       {/* Recording text */}
-      <span className="text-sm text-destructive">Recording...</span>
-      
+      <span className="text-destructive text-sm">Recording...</span>
+
       {/* Animated waveform bars */}
-      <div className="flex items-center gap-0.5 h-6">
+      <div className="flex h-6 items-center gap-0.5">
         {bars.map((height, i) => (
           <div
             key={i}
-            className="w-1 bg-destructive rounded-full transition-all duration-150"
+            className="bg-destructive w-1 rounded-full transition-all duration-150"
             style={{ height: `${Math.max(20, height)}%` }}
           />
         ))}

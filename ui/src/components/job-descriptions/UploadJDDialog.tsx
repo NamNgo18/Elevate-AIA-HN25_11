@@ -1,7 +1,13 @@
-import { useState, useCallback } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Upload, FileText, CheckCircle2, X } from 'lucide-react';
+import { useState, useCallback } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Upload, FileText, CheckCircle2, X } from "lucide-react";
 
 interface UploadJDDialogProps {
   open: boolean;
@@ -9,16 +15,20 @@ interface UploadJDDialogProps {
   onUploadSuccess: (fileName: string) => void;
 }
 
-export function UploadJDDialog({ open, onOpenChange, onUploadSuccess }: UploadJDDialogProps) {
+export function UploadJDDialog({
+  open,
+  onOpenChange,
+  onUploadSuccess,
+}: UploadJDDialogProps) {
   const [dragActive, setDragActive] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
+    if (e.type === "dragenter" || e.type === "dragover") {
       setDragActive(true);
-    } else if (e.type === 'dragleave') {
+    } else if (e.type === "dragleave") {
       setDragActive(false);
     }
   }, []);
@@ -30,11 +40,14 @@ export function UploadJDDialog({ open, onOpenChange, onUploadSuccess }: UploadJD
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
-      if (file.type === 'application/pdf' || 
-          file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      if (
+        file.type === "application/pdf" ||
+        file.type ===
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      ) {
         setUploadedFile(file);
       } else {
-        alert('Please upload only PDF or DOCX files');
+        alert("Please upload only PDF or DOCX files");
       }
     }
   }, []);
@@ -42,11 +55,14 @@ export function UploadJDDialog({ open, onOpenChange, onUploadSuccess }: UploadJD
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      if (file.type === 'application/pdf' || 
-          file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      if (
+        file.type === "application/pdf" ||
+        file.type ===
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      ) {
         setUploadedFile(file);
       } else {
-        alert('Please upload only PDF or DOCX files');
+        alert("Please upload only PDF or DOCX files");
       }
     }
   };
@@ -76,8 +92,10 @@ export function UploadJDDialog({ open, onOpenChange, onUploadSuccess }: UploadJD
 
         <div className="space-y-6">
           <div
-            className={`relative border-2 border-dashed rounded-lg p-12 text-center transition-colors ${
-              dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 bg-gray-50'
+            className={`relative rounded-lg border-2 border-dashed p-12 text-center transition-colors ${
+              dragActive
+                ? "border-blue-500 bg-blue-50"
+                : "border-gray-300 bg-gray-50"
             }`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
@@ -86,62 +104,70 @@ export function UploadJDDialog({ open, onOpenChange, onUploadSuccess }: UploadJD
           >
             {uploadedFile ? (
               <div className="flex items-center justify-center gap-3">
-                <FileText className="w-8 h-8 text-green-600" />
+                <FileText className="h-8 w-8 text-green-600" />
                 <div className="text-left">
                   <p className="text-gray-900">{uploadedFile.name}</p>
-                  <p className="text-gray-500">{(uploadedFile.size / 1024).toFixed(2)} KB</p>
+                  <p className="text-gray-500">
+                    {(uploadedFile.size / 1024).toFixed(2)} KB
+                  </p>
                 </div>
-                <CheckCircle2 className="w-6 h-6 text-green-600" />
+                <CheckCircle2 className="h-6 w-6 text-green-600" />
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setUploadedFile(null)}
                   className="ml-auto"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="h-4 w-4" />
                 </Button>
               </div>
             ) : (
               <>
-                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-700 mb-2">Drag and drop your file here, or click to browse</p>
+                <Upload className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+                <p className="mb-2 text-gray-700">
+                  Drag and drop your file here, or click to browse
+                </p>
                 <p className="text-gray-500">Supports PDF and DOCX files</p>
                 <input
                   type="file"
                   accept=".pdf,.docx"
                   onChange={handleFileInput}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                 />
               </>
             )}
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 className="text-blue-900 mb-3">Best Practices for JD Scanning</h3>
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+            <h3 className="mb-3 text-blue-900">
+              Best Practices for JD Scanning
+            </h3>
             <ul className="space-y-2 text-blue-800">
               <li className="flex items-start gap-2">
-                <span className="text-blue-600 mt-1">•</span>
+                <span className="mt-1 text-blue-600">•</span>
                 <span>Include clear job title and position level</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-blue-600 mt-1">•</span>
+                <span className="mt-1 text-blue-600">•</span>
                 <span>List required skills and technologies explicitly</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-blue-600 mt-1">•</span>
+                <span className="mt-1 text-blue-600">•</span>
                 <span>Specify years of experience required</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-blue-600 mt-1">•</span>
+                <span className="mt-1 text-blue-600">•</span>
                 <span>Include educational requirements and certifications</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-blue-600 mt-1">•</span>
+                <span className="mt-1 text-blue-600">•</span>
                 <span>Use standard formatting with clear sections</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-blue-600 mt-1">•</span>
-                <span>Avoid images or complex layouts for better text extraction</span>
+                <span className="mt-1 text-blue-600">•</span>
+                <span>
+                  Avoid images or complex layouts for better text extraction
+                </span>
               </li>
             </ul>
           </div>

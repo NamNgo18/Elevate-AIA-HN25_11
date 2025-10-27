@@ -43,7 +43,7 @@ export function Timer({ onTimeUpdate }: TimerProps) {
         <div className="flex items-center justify-between gap-4">
           <div className="flex-1">
             <p className="text-muted-foreground mb-1">Response Time</p>
-            <div className="text-3xl font-mono">{formatTime(seconds)}</div>
+            <div className="font-mono text-3xl">{formatTime(seconds)}</div>
           </div>
           <div className="flex gap-2">
             <Button
@@ -51,7 +51,11 @@ export function Timer({ onTimeUpdate }: TimerProps) {
               size="icon"
               onClick={() => setIsRunning(!isRunning)}
             >
-              {isRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              {isRunning ? (
+                <Pause className="h-4 w-4" />
+              ) : (
+                <Play className="h-4 w-4" />
+              )}
             </Button>
             <Button variant="outline" size="icon" onClick={handleReset}>
               <RotateCcw className="h-4 w-4" />

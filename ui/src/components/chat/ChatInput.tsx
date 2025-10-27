@@ -12,7 +12,12 @@ interface ChatInputProps {
   disabled?: boolean;
 }
 
-export function ChatInput({ onSendMessage, onToggleCamera, isCameraOn, disabled }: ChatInputProps) {
+export function ChatInput({
+  onSendMessage,
+  onToggleCamera,
+  isCameraOn,
+  disabled,
+}: ChatInputProps) {
   const [message, setMessage] = useState("");
   const [isRecording, setIsRecording] = useState(false);
 
@@ -33,7 +38,7 @@ export function ChatInput({ onSendMessage, onToggleCamera, isCameraOn, disabled 
   const toggleRecording = () => {
     const newRecordingState = !isRecording;
     setIsRecording(newRecordingState);
-    
+
     if (newRecordingState) {
       toast.info("Recording started");
       // In a real app, this would start voice recording
@@ -44,31 +49,31 @@ export function ChatInput({ onSendMessage, onToggleCamera, isCameraOn, disabled 
   };
 
   return (
-    <div className="border-t border-border bg-white">
+    <div className="border-border border-t bg-white">
       {/* Recording Indicator Bar */}
       {isRecording && (
-        <div className="px-4 py-3 bg-muted/50 border-b border-border">
-          <div className="max-w-4xl mx-auto flex items-center justify-center">
+        <div className="bg-muted/50 border-border border-b px-4 py-3">
+          <div className="mx-auto flex max-w-4xl items-center justify-center">
             <RecordingIndicator />
           </div>
         </div>
       )}
-      
+
       {/* Input Area */}
       <div className="p-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex gap-3 items-end">
+        <div className="mx-auto max-w-4xl">
+          <div className="flex items-end gap-3">
             <div className="flex-1">
               <Textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Type your answer here..."
-                className="resize-none min-h-[56px] max-h-[200px] rounded-xl border-border focus-visible:ring-primary"
+                className="border-border focus-visible:ring-primary max-h-[200px] min-h-[56px] resize-none rounded-xl"
                 disabled={disabled || isRecording}
               />
             </div>
-            
+
             <div className="flex gap-2">
               <Button
                 variant={isRecording ? "destructive" : "outline"}
@@ -83,7 +88,7 @@ export function ChatInput({ onSendMessage, onToggleCamera, isCameraOn, disabled 
                   <Mic className="h-5 w-5" />
                 )}
               </Button>
-              
+
               <Button
                 variant={isCameraOn ? "default" : "outline"}
                 size="icon"
@@ -96,10 +101,10 @@ export function ChatInput({ onSendMessage, onToggleCamera, isCameraOn, disabled 
                   <Video className="h-5 w-5" />
                 )}
               </Button>
-              
+
               <Button
                 size="icon"
-                className="h-14 w-14 rounded-full bg-primary hover:bg-primary/90"
+                className="bg-primary hover:bg-primary/90 h-14 w-14 rounded-full"
                 onClick={handleSend}
                 disabled={!message.trim() || disabled || isRecording}
               >
