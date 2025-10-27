@@ -3,24 +3,34 @@ import sys
 import time
 import threading
 import webbrowser
-import subprocess
+import subprocess  # <-- Use the main subprocess module
 
-from dotenv     import load_dotenv
+from dotenv import load_dotenv
 
 __all__ = []
+
+# Define the project root (one level up from this script's directory)
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 
 # ========================================
 #           Configure env
 # ========================================
 def _config_env():
     load_dotenv()
-    os.environ["PYTHONPATH"] = '.'
+    # Set the PYTHONPATH to the project root
+    os.environ["PYTHONPATH"] = PROJECT_ROOT
+
 
 # ========================================
 #           Run backend FastAPI app
 # ========================================
 def _run_backend():
-    subprocess.Popen([
+    # --- MODIFIED ---
+    # Use subprocess.run() instead of Popen().
+    # This is a BLOCKING call and will keep this thread alive
+    # until the uvicorn server is manually stopped.
+    subprocess.run([
         sys.executable,
         "-m",
         "uvicorn",
@@ -29,8 +39,16 @@ def _run_backend():
         "127.0.0.1",
         "--port",
         "8000",
-        "--reload"
-    ], env = os.environ)
+        "--reload",
+        # Explicitly tell uvicorn to watch the 'app' directory
+        "--reload-dir",
+        os.path.join(PROJECT_ROOT, "app")
+    ],
+        env=os.environ,
+        # Run this command *from* the project root directory
+        cwd=PROJECT_ROOT
+    )
+
 
 # ========================================
 #           Run Frontend (Streamlit)
@@ -50,14 +68,16 @@ def _run_frontend():
         webbrowser.open(os.getenv("APP_FRONTEND_URL").rstrip("/"))
         print("UI stopped by user!")
 
+
 # ========================================
 #           Application Entry Point
 # ========================================
 if __name__ == "__main__":
     _config_env()
-    ui = threading.Thread(target = _run_frontend)
-    be = threading.Thread(target = _run_backend)
+    ui = threading.Thread(target=_run_frontend)
+    be = threading.Thread(target=_run_backend)
     args_lower = [arg.lower() for arg in sys.argv[1:]]
+
     if args_lower == ["-fe"]:
         ui.start()
         ui.join()
@@ -65,7 +85,16 @@ if __name__ == "__main__":
         be.start()
         be.join()
     else:
+        print("🚀 Starting backend (FastAPI)...")
         be.start()
+        print("🚀 Starting frontend (Streamlit)...")
         ui.start()
+
+        # Now, these .join() calls will correctly wait
+        # until the threads are finished (which only happens
+        # when you manually stop the servers).
         ui.join()
         be.join()
+
+    print("👋 Both servers have been stopped. Goodbye!")
+
