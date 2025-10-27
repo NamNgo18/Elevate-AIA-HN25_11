@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Clock } from "lucide-react";
 import { toast } from "sonner";
-import { questions } from "@/features/questions/questions";
+import { questions } from "@/features/questions/Question.types";
 
 interface Message {
   id: number;
