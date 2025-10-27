@@ -20,7 +20,8 @@ def _setup_api(app: FastAPI = None) -> None:
         raise RuntimeError("Unable to identify the FAST application..")
 
     # Import routers
-    from app.routes.speech              import  router  as  speech_router
+    from app.routes.qna                 import  router          as  qna_router
+    from app.routes.speech              import  router          as  speech_router
     from app.utilities.openAI_helper    import  OpenAIHelper
 
     # Initialize OpenAI Helper singleton
@@ -35,6 +36,7 @@ def _setup_api(app: FastAPI = None) -> None:
     )
     # Include API routes
     app.include_router(speech_router, prefix = "/routes/speech")
+    app.include_router(speech_router, prefix = "/routes/qna")
 
 # ========================================
 #           Backend FastAPI app
