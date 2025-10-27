@@ -27,16 +27,13 @@ export function CandidateCard({ candidate, onContact }: CandidateCardProps) {
 
   return (
     <Card className="hover:shadow-md transition-shadow">
-      <CardContent className="p-6">
+      <CardContent className="py-1/2">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-3">
               <h3 className="text-gray-900">{candidate.name}</h3>
-              <Badge className={`${getScoreColor(candidate.suitabilityScore)} text-white`}>
-                {candidate.suitabilityScore}% Match
-              </Badge>
             </div>
-            
+
             <div className="space-y-2 text-gray-600">
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-gray-400" />
@@ -50,12 +47,18 @@ export function CandidateCard({ candidate, onContact }: CandidateCardProps) {
                 <Briefcase className="w-4 h-4 text-gray-400" />
                 <span>{candidate.yearsOfExp} years of experience</span>
               </div>
+              <div className="flex items-center gap-2 mt-6">
+                <Button onClick={() => onContact(candidate)}>
+                  Contact
+                </Button>
+              </div>
             </div>
           </div>
 
-          <Button onClick={() => onContact(candidate)} className="ml-4">
-            Contact
-          </Button>
+          <Badge className={`${getScoreColor(candidate.suitabilityScore)} text-white`}>
+            {candidate.suitabilityScore}% Match
+          </Badge>
+
         </div>
       </CardContent>
     </Card>
