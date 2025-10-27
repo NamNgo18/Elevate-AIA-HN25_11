@@ -147,7 +147,7 @@ OPENAI_URL             =
 OPENAI_QNA_MODEL       =
 
 # App Configuration
-APP_FRONTEND_URL       = http://localhost:8501/
+APP_FRONTEND_URL       = http://localhost:3000/
 APP_BACKEND_URL        = http://127.0.0.1:8000/
 """
 

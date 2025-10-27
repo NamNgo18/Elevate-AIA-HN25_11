@@ -38,16 +38,14 @@ def _run_backend():
 def _run_frontend():
     try:
         time.sleep(2)
+        # Run the frontend dev script using pnpm inside the `ui` directory.
+        # Use the script's location to compute the project root reliably.
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        ui_dir = os.path.abspath(os.path.join(script_dir, "..", "ui"))
         subprocess.Popen([
-            sys.executable,
-            "-m",
-            "streamlit",
-            "run",
-            os.path.join("ui", "main_ui.py"),
-            "server.runOnSave = true",
-            "--server.port",
-            "8051"
-        ], env = os.environ)
+            "pnpm",
+            "dev",
+        ], cwd=ui_dir, env=os.environ)
     except KeyboardInterrupt:
         webbrowser.open(os.getenv("APP_FRONTEND_URL").rstrip("/"))
         print("UI stopped by user!")
