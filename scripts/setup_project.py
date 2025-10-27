@@ -10,53 +10,45 @@ __all__ = []
 # ========================================
 #    Utility Functions
 # ========================================
-
 def _check_tool_installed(tool_name: str) -> bool:
     """Check if a command-line tool is available on PATH."""
     return shutil.which(tool_name) is not None
 
-
-def _run_command(cmd, cwd = None):
+def _run_command(cmd_in: str = "", cwd = None):
     """Run a shell command and stream its output (raises on failure)."""
-    print(f"\n✅ Running: {' '.join(cmd)} (cwd = {cwd or Path.cwd()})")
+    cmd = ' '.join(str(i) for i in cmd_in)
+    print(f"\n✅ Running: {cmd} (cwd = {cwd or Path.cwd()})")
     try:
-        subprocess.run(cmd, cwd=cwd, check=True)
+        subprocess.run(cmd, cwd = cwd, check = True)
         print("✅ Command finished successfully!")
     except subprocess.CalledProcessError as e:
         print(f"❌ Command failed: {e}")
         sys.exit(1)
 
-
 # ========================================
 #    NPM: Simple `npm install`
 # ========================================
-
-def _npm_install(react_actual_path: str):
+def _npm_install(react_actual_path: str = ""):
     """Run 'npm install' inside the React project directory."""
     if not _check_tool_installed("npm"):
         print("❌ npm not found. Please install Node.js and npm first.")
         sys.exit(1)
 
     project_dir = Path(react_actual_path).resolve()
-
-    if not (project_dir / "package.json").exists():
+    if not (project_dir/"package.json").exists():
         print(f"❌ No package.json found in {project_dir}")
         sys.exit(1)
 
     print(f"✅ Running 'npm install' in {project_dir}")
     _run_command(["npm", "install"], cwd = str(project_dir))
 
-
 # ========================================
 #    PIP Installation (requirements.txt)
 # ========================================
-
 def _get_installed_pip_versions() -> dict:
     """Return {package_name: version} for all installed pip packages."""
     try:
-        result = subprocess.check_output(
-            [sys.executable, "-m", "pip", "freeze"], text=True
-        )
+        result = subprocess.check_output([sys.executable, "-m", "pip", "freeze"], text = True)
     except subprocess.CalledProcessError:
         return {}
 
@@ -66,7 +58,6 @@ def _get_installed_pip_versions() -> dict:
             name, version = line.strip().split("==", 1)
             packages[name.lower()] = version
     return packages
-
 
 def _get_required_pip_requirements(requirements_path: str = None) -> list[Requirement]:
     """Parse all requirement lines into Requirement objects."""
@@ -84,9 +75,8 @@ def _get_required_pip_requirements(requirements_path: str = None) -> list[Requir
             try:
                 requirements.append(Requirement(line))
             except Exception as e:
-                print(f"⚠️  Skipping invalid requirement '{line}': {e}")
+                print(f"⚠️ Skipping invalid requirement '{line}': {e}")
     return requirements
-
 
 def _install_pip_dependencies(requirements_path: str = None):
     if not _check_tool_installed("pip"):
@@ -121,11 +111,9 @@ def _install_pip_dependencies(requirements_path: str = None):
     else:
         print("✅ All Python packages (and versions) satisfy requirements. Skipping install.")
 
-
 # ========================================
 #    Write vars into .env file
 # ========================================
-
 def _setup_env_file(env_path: str = "../.env", env_content: str = ""):
     if not env_content.strip():
         raise ValueError("env_content is empty — please provide environment variables content.")
@@ -133,7 +121,7 @@ def _setup_env_file(env_path: str = "../.env", env_content: str = ""):
     env_file_path = (Path(__file__).resolve().parent / env_path).resolve()
 
     if env_file_path.exists():
-        print(f"⚠️  {env_file_path} already exists. Aborting to avoid overwriting.")
+        print(f"⚠️ {env_file_path} already exists. Aborting to avoid overwriting.")
         return
 
     try:
@@ -143,7 +131,6 @@ def _setup_env_file(env_path: str = "../.env", env_content: str = ""):
 
     env_file_path.write_text(env_content)
     print(f"✅ {env_file_path} has been created. Please fill in your values manually later!")
-
 
 # ========================================
 #    Main Entry Point
