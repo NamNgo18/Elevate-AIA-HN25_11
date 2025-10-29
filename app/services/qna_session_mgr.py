@@ -1,4 +1,5 @@
 import uuid
+import copy
 
 from enum                       import Enum
 from threading                  import Lock
@@ -56,3 +57,16 @@ class SessionManager:
                 del self._sessions[session_id]
                 return True
             return False
+
+    def trim_history(self, session_id: str = None, max_hst: int = 20, msg_nb_first: int = 6) -> list:
+        if session_id not in self._sessions:
+            return None
+
+        # Safety copy
+        chat_hst = copy.deepcopy(self._sessions[session_id]["conversation_history"])
+        if len(chat_hst) <= max_hst:
+            return chat_hst
+
+        stat = min(msg_nb_first, max_hst)
+        end = max_hst - stat
+        return chat_hst[:stat] + chat_hst[-end:] if end > 0 else chat_hst[:]

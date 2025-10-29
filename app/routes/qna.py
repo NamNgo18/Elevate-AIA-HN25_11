@@ -1,5 +1,6 @@
 import asyncio
 
+from pydantic                   import BaseModel
 from fastapi                    import APIRouter, status
 from fastapi.responses          import JSONResponse
 from ..utilities.log_manager    import LoggingManager
@@ -12,10 +13,26 @@ from ..services                 import qna_generator          as qna_svc
 router = APIRouter()
 
 # =======================================
+#     Payload Model sending from Client
+# =======================================
+class InterviewStartRequest(BaseModel):
+    sys_prompt: str = "You are an AI designed to provide support and assistance for interview processes."
+    job_description: dict
+
+class AudioData(BaseModel):
+    activated: bool
+    path: str = None
+
+class InterviewAnswerRequest(BaseModel):
+    session_id: str
+    answer: str
+    audio: AudioData
+
+# =======================================
 #       Start Interview Session
 # =======================================
 @router.post("/start")
-def handle_interview_begin_session(sys_prompt: str = "You are an AI designed to provide support and assistance"):
+def handle_interview_begin_session(param_in: InterviewStartRequest):
     """
     Initialize interview session
     """
@@ -24,23 +41,23 @@ def handle_interview_begin_session(sys_prompt: str = "You are an AI designed to 
 
     params = {
         "phase_state": qna_smgr.SessionPhase.INTRO,
-        "sys_prompt": sys_prompt
+        "sys_prompt": param_in.sys_prompt
     }
 
     # Get interview questions list
     #  TODO: Implement question fetching logic
 
     # QnA session instance
-    new_session_id: str = qna_smgr.SessionManager().create_session(**params)
-    app_logger.info(f"Initializing interview session for session_id: {new_session_id}")
-    qna_session_mgr = qna_smgr.SessionManager().get_session(new_session_id)
-    if not qna_session_mgr:
-        app_logger.error(f"Session ID {new_session_id} not found.")
-        result["error"] = "Failed to start interview session.."
+    new_ssid: str = qna_smgr.SessionManager().create_session(**params)
+    app_logger.info(f"Initializing interview session for session_id: {new_ssid}")
+    svc_status = qna_svc.handle_start_interview(new_ssid)
+    if not svc_status:
+        result["error"] = f"Failed to start interview session - ID: {new_ssid}."
         return JSONResponse(content = result, status_code = status.HTTP_400_BAD_REQUEST)
 
-    result["session_id"] = new_session_id
-    app_logger.info(f"Session {new_session_id} phase updated to {qna_smgr.SessionPhase.INTRO.name}.")
+    result["session_id"] = new_ssid
+    result["reply"] = svc_status
+    app_logger.info(f"Session {new_ssid} phase updated to {qna_smgr.SessionPhase.INTRO.name}.")
     return JSONResponse(content = result, status_code = status.HTTP_200_OK)
 
 # =======================================
