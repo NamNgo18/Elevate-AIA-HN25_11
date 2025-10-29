@@ -33,8 +33,8 @@ def _run_command(cmd_in: list[str], cwd=None):
 def _pnpm_install(react_project_dir: str = "ui"):
     """Run 'pnpm install' in the React project if needed."""
     if not _check_tool_installed("pnpm"):
-        print("❌ pnpm not found. Please install pnpm first (npm i -g pnpm).")
-        sys.exit(1)
+        print("❌ pnpm not found. Try to install pnpm tool using: npm i -g pnpm")
+        _run_command(["npm", "install", "-g", "pnpm"])
 
     project_dir = (Path(__file__).resolve().parent.parent / react_project_dir).resolve()
     package_json_path = project_dir / "package.json"
