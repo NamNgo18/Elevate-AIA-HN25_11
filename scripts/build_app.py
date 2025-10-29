@@ -53,6 +53,7 @@ def _run_frontend():
 
         # ✅ Use pnpm.cmd on Windows, pnpm on others
         pnpm_cmd = "pnpm.cmd" if sys.platform == "win32" else "pnpm"
+        webbrowser.open(os.getenv("APP_FRONTEND_URL").rstrip("/"))
 
         subprocess.Popen(
             [pnpm_cmd, "dev"],
@@ -61,7 +62,7 @@ def _run_frontend():
             shell=(sys.platform == "win32"),  # ✅ allow PATH resolution
         )
     except KeyboardInterrupt:
-        webbrowser.open(os.getenv("APP_FRONTEND_URL", "http://localhost:8501").rstrip("/"))
+        webbrowser.open(os.getenv("APP_FRONTEND_URL").rstrip("/"))
         print("UI stopped by user!")
 
 
