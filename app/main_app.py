@@ -20,7 +20,11 @@ def _setup_api(app: FastAPI = None) -> None:
         raise RuntimeError("Unable to identify the FAST application..")
 
     # Import routers
-    from app.routes.speech  import  router  as  speech_router
+    from app.routes.speech              import  router  as  speech_router
+    from app.utilities.openAI_helper    import  OpenAIHelper
+
+    # Initialize OpenAI Helper singleton
+    OpenAIHelper()
 
     # Setup CORS to allow Streamlit frontend to call backend
     app.add_middleware(
