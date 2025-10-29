@@ -1,6 +1,7 @@
 import sys
 import shutil
 import subprocess
+import json
 from pathlib                import Path
 from packaging.version      import Version, InvalidVersion
 from packaging.requirements import Requirement
@@ -14,33 +15,65 @@ def _check_tool_installed(tool_name: str) -> bool:
     """Check if a command-line tool is available on PATH."""
     return shutil.which(tool_name) is not None
 
-def _run_command(cmd_in: str = "", cwd = None):
+def _run_command(cmd_in: list[str], cwd=None):
     """Run a shell command and stream its output (raises on failure)."""
-    cmd = ' '.join(str(i) for i in cmd_in)
-    print(f"\n✅ Running: {cmd} (cwd = {cwd or Path.cwd()})")
+    cmd_str_for_printing = ' '.join(str(i) for i in cmd_in)
+    print(f"\n✅ Running: {cmd_str_for_printing} (cwd = {cwd or Path.cwd()})")
     try:
-        subprocess.run(cmd, cwd = cwd, check = True)
+        subprocess.run(cmd_in, cwd=cwd, check=True, shell=(sys.platform == "win32"))
         print("✅ Command finished successfully!")
     except subprocess.CalledProcessError as e:
         print(f"❌ Command failed: {e}")
         sys.exit(1)
 
 # ========================================
-#    NPM: Simple `npm install`
+#    PNPM: Simple `pnpm install`
 # ========================================
-def _npm_install(react_actual_path: str = ""):
-    """Run 'npm install' inside the React project directory."""
-    if not _check_tool_installed("npm"):
-        print("❌ npm not found. Please install Node.js and npm first.")
+
+def _pnpm_install(react_project_dir: str = "ui"):
+    """Run 'pnpm install' in the React project if needed."""
+    if not _check_tool_installed("pnpm"):
+        print("❌ pnpm not found. Please install pnpm first (npm i -g pnpm).")
         sys.exit(1)
 
-    project_dir = Path(react_actual_path).resolve()
-    if not (project_dir/"package.json").exists():
+    project_dir = (Path(__file__).resolve().parent.parent / react_project_dir).resolve()
+    package_json_path = project_dir / "package.json"
+    node_modules_dir = project_dir / "node_modules"
+
+    if not package_json_path.exists():
         print(f"❌ No package.json found in {project_dir}")
         sys.exit(1)
 
-    print(f"✅ Running 'npm install' in {project_dir}")
-    _run_command(["npm", "install"], cwd = str(project_dir))
+    print(f"✅ Checking frontend dependencies in {project_dir}")
+
+    # Load required dependencies from package.json
+    with package_json_path.open("r", encoding="utf-8") as f:
+        package_data = json.load(f)
+
+    required_deps = set()
+    for section in ("dependencies", "devDependencies"):
+        if section in package_data:
+            required_deps.update(package_data[section].keys())
+
+    # If node_modules doesn't exist, we must install
+    if not node_modules_dir.exists():
+        print("📦 node_modules not found — running pnpm install...")
+        _run_command(["pnpm", "install"], cwd=str(project_dir))
+        return
+
+    # Check if all dependencies exist inside node_modules
+    missing = []
+    for dep in required_deps:
+        dep_path = node_modules_dir / dep
+        if not dep_path.exists():
+            missing.append(dep)
+
+    if missing:
+        print(f"📦 Missing dependencies detected")
+        print("🔧 Running pnpm install to fix...")
+        _run_command(["pnpm", "install"], cwd=str(project_dir))
+    else:
+        print("✅ All dependencies already installed. Skipping pnpm install.")
 
 # ========================================
 #    PIP Installation (requirements.txt)
@@ -112,47 +145,45 @@ def _install_pip_dependencies(requirements_path: str = None):
         print("✅ All Python packages (and versions) satisfy requirements. Skipping install.")
 
 # ========================================
-#    Write vars into .env file
+#    Write .env files from template
 # ========================================
-def _setup_env_file(env_path: str = "../.env", env_content: str = ""):
-    if not env_content.strip():
-        raise ValueError("env_content is empty — please provide environment variables content.")
+def _setup_env_file_from_template(template_path: Path, output_path: Path):
+    """
+    Copy a template .env file if it doesn't already exist.
+    """
+    if not template_path.exists():
+        print(f"❌ Template not found: {template_path}")
+        return
 
-    env_file_path = (Path(__file__).resolve().parent / env_path).resolve()
-
-    if env_file_path.exists():
-        print(f"⚠️ {env_file_path} already exists. Aborting to avoid overwriting.")
+    if output_path.exists():
+        print(f"⚠️ {output_path} already exists. Skipping to avoid overwriting.")
         return
 
     try:
-        env_file_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(template_path, output_path)
+        print(f"✅ Created {output_path} from {template_path}")
     except Exception as e:
-        raise RuntimeError(f"❌ Unable to create {env_file_path} - [{e}]")
-
-    env_file_path.write_text(env_content)
-    print(f"✅ {env_file_path} has been created. Please fill in your values manually later!")
+        raise RuntimeError(f"❌ Unable to create {output_path}: {e}")
 
 # ========================================
 #    Main Entry Point
 # ========================================
 if __name__ == "__main__":
     script_path = Path(__file__).resolve().parent
-    react_actual_path = (script_path.parent/"requirements.txt").resolve()
-    requirements_path = (script_path/"requirements.txt").resolve()
-    env_file_path = (script_path.parent/".env").resolve()
+    project_root = script_path.parent
+    requirements_path = script_path / "requirements.txt"
 
-    env_content_fix = f"""# OpenAI API Configuration
-OPENAI_API_KEY         =
-OPENAI_URL             =
-OPENAI_QNA_MODEL       =
+    backend_template = project_root / ".env.example"
+    backend_env = project_root / ".env"
 
-# App Configuration
-APP_FRONTEND_URL       = http://localhost:8501/
-APP_BACKEND_URL        = http://127.0.0.1:8000/
-"""
+    frontend_template = project_root / "ui" / ".env.example"
+    frontend_env = project_root / "ui" / ".env"
 
-    # _npm_install(react_actual_path)
+    _pnpm_install("ui")
     _install_pip_dependencies(requirements_path)
-    _setup_env_file(env_path = env_file_path, env_content = env_content_fix)
+
+    _setup_env_file_from_template(backend_template, backend_env)
+    _setup_env_file_from_template(frontend_template, frontend_env)
 
     print("\n🎉 Setup complete! Your project is ready to run.")
