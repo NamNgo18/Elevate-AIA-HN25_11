@@ -2,6 +2,9 @@ import datetime
 import os
 import uuid
 from pathlib import Path
+
+from openai.types import file_content
+
 from app.utilities.csv_utils import CsvUtils
 import json  # For pretty printing
 
@@ -11,8 +14,8 @@ BASE_DIR = Path(__file__).parent.parent.parent.resolve()
 UPLOAD_DIRECTORY = BASE_DIR / "data" / "upload" / "JD"
 META_DATA_FILE_PATH = UPLOAD_DIRECTORY / "jd_file.csv"
 
-# Schema: "ID" is the unique UUID, "Name" is the original uploaded filename
-DATA_SCHEMA = ["ID", "Name"]
+# Schema: "id" is the unique UUid, "name" is the original uploaded filename
+DATA_SCHEMA = ["id", "name","uploadDate"]
 
 # Initialize the CSV handler with the absolute path
 try:
@@ -52,7 +55,7 @@ def get_all() -> list[dict]:
 
     Returns:
         list[dict]: A list of dictionaries, e.g., 
-                    [{'ID': '...', 'Name': '...'}, ...]
+                    [{'id': '...', 'name': '...'}, ...]
     """
     print("--- Getting all JDs ---")
     try:
@@ -67,30 +70,31 @@ def get_all() -> list[dict]:
 
 def get_by_id(id: str) -> tuple[Path, str]:
     """ 
-    Finds the file path for a given JD ID.
+    Finds the file path for a given JD id.
 
     Args:
-        id (str): The UUID of the JD to find.
+        id (str): The UUid of the JD to find.
 
     Returns:
         Path: The full, absolute path to the file.
 
     Raises:
-        FileNotFoundError: If no JD with that ID is found in the metadata
+        FileNotFoundError: If no JD with that id is found in the metadata
                            or if the file itself is missing.
     """
-    print(f"--- Getting JD by ID: {id} ---")
+    print(f"--- Getting JD by id: {id} ---")
     all_jds = get_all()
 
-    jd_meta = next((jd for jd in all_jds if jd.get("ID") == id), None)
+    jd_meta = next((jd for jd in all_jds if jd.get("id") == id), None)
 
     if not jd_meta:
-        raise FileNotFoundError(f"No metadata found for JD with ID: {id}")
+        raise FileNotFoundError(f"No metadata found for JD with id: {id}")
 
     # Reconstruct the filename (e.g., "uuid.pdf")
-    original_filename = jd_meta.get("Name", "").strip()
+    original_filename = jd_meta.get("name", "").strip()
+    file_extension = original_filename.split(".")[-1]
 
-    file_path = UPLOAD_DIRECTORY / f"{original_filename}"
+    file_path = UPLOAD_DIRECTORY / f"{id}.{file_extension}"
     print(f"File path: {file_path}")
 
     if not file_path.exists():
@@ -103,7 +107,7 @@ def get_by_id(id: str) -> tuple[Path, str]:
 def upload(original_filename: str, file_contents: bytes, content_type: str) -> str:
     """ 
     Uploads a JD file.
-    1. Saves the file to the upload directory with a unique ID.
+    1. Saves the file to the upload directory with a unique id.
     2. Updates the CSV metadata file.
 
     Args:
@@ -112,7 +116,7 @@ def upload(original_filename: str, file_contents: bytes, content_type: str) -> s
         content_type (str): The MIME type of the file.
 
     Returns:
-        str: The newly generated unique ID (UUID) for the file.
+        str: The newly generated unique id (UUid) for the file.
 
     Raises:
         ValueError: If the content type is not allowed.
@@ -126,8 +130,9 @@ def upload(original_filename: str, file_contents: bytes, content_type: str) -> s
 
     now = datetime.datetime.now().strftime("%Y%m%d%H:%M:%S")
     new_id = str(uuid.uuid4())
-    new_filename = f"{now}_{original_filename}"
-    save_path = UPLOAD_DIRECTORY / new_filename
+    new_filename = f"{original_filename}"
+    file_extension = new_filename.split(".")[-1]
+    save_path = UPLOAD_DIRECTORY / f"{new_id}.{file_extension}"
 
     try:
         with open(save_path, 'wb') as f:
@@ -146,12 +151,12 @@ def upload(original_filename: str, file_contents: bytes, content_type: str) -> s
         data_to_write = _convert_dict_to_list(all_jds_data)
 
         # Add the new record
-        data_to_write.append([new_id, new_filename])
+        data_to_write.append([new_id, new_filename,now])
 
         # Write all data back
         csv_handler.write_to_csv(data_to_write)
 
-        print(f"Successfully added metadata for ID: {new_id}")
+        print(f"Successfully added metadata for id: {new_id}")
         return new_id
 
     except Exception as e:
@@ -170,23 +175,24 @@ def delete_by_id(id: str):
     2. Removes the row from the CSV metadata file.
 
     Args:
-        id (str): The UUID of the JD to delete.
+        id (str): The UUid of the JD to delete.
 
     Raises:
-        FileNotFoundError: If no JD with that ID is found.
+        FileNotFoundError: If no JD with that id is found.
     """
-    print(f"--- Deleting JD by ID: {id} ---")
+    print(f"--- Deleting JD by id: {id} ---")
     all_jds = get_all()  # list[dict]
 
-    jd_to_delete = next((jd for jd in all_jds if jd.get("ID") == id), None)
+    jd_to_delete = next((jd for jd in all_jds if jd.get("id") == id), None)
 
     if not jd_to_delete:
-        raise FileNotFoundError(f"No metadata found for JD with ID: {id}")
+        raise FileNotFoundError(f"No metadata found for JD with id: {id}")
 
     # --- 1. Delete the file ---
     try:
-        original_filename = jd_to_delete.get("Name", "").strip()
-        file_path = UPLOAD_DIRECTORY / f"{original_filename}"
+        original_filename = jd_to_delete.get("name", "").strip()
+        file_extension = original_filename.split(".")[-1]
+        file_path = UPLOAD_DIRECTORY / f"{id}.{file_extension}"
 
         if file_path.exists():
             os.remove(file_path)
@@ -200,14 +206,14 @@ def delete_by_id(id: str):
         # For this example, we'll continue
 
     # --- 2. Remove from metadata and re-write CSV ---
-    new_data_list = [jd for jd in all_jds if jd.get("ID") != id]
+    new_data_list = [jd for jd in all_jds if jd.get("id") != id]
 
     # Convert list[dict] back to list[list] for writing
     data_to_write = _convert_dict_to_list(new_data_list)
 
     try:
         csv_handler.write_to_csv(data_to_write)
-        print(f"Successfully removed metadata for ID: {id}")
+        print(f"Successfully removed metadata for id: {id}")
     except Exception as e:
         print(f"Error re-writing metadata after deletion: {e}")
         # At this point, the file is deleted but the CSV is out of sync.

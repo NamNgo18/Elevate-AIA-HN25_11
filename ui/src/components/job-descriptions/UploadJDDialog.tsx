@@ -67,8 +67,20 @@ export function UploadJDDialog({
     }
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (uploadedFile) {
+      //upload file to backend
+      const formData = new FormData();
+      formData.append("file", uploadedFile);
+      
+      const response = await fetch("http://127.0.0.1:8000/jd", {
+        method: "POST",
+        body: formData,
+      })
+      if (!response.ok) {
+        alert("Failed to upload file");
+        return;
+      }
       onUploadSuccess(uploadedFile.name);
       setUploadedFile(null);
       onOpenChange(false);

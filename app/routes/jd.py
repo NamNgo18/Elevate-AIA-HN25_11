@@ -33,10 +33,16 @@ def get_jd_by_id(id: str):
             # Fallback in case filename is blank in CSV
             original_filename = file_path.name
 
+        # This header allows your frontend JS to read Content-Disposition
+        headers = {
+            "Access-Control-Expose-Headers": "Content-Disposition"
+        }
+
         return FileResponse(
             path=file_path,
-            filename=original_filename,
-            media_type='application/octet-stream'  # Force download
+            filename=original_filename,  # This correctly sets Content-Disposition
+            media_type='application/octet-stream',
+            headers=headers  # Pass the extra header here
         )
     except FileNotFoundError as e:
         app_logger.warn(f"File not found for ID {id}: {e}")
@@ -44,7 +50,6 @@ def get_jd_by_id(id: str):
     except Exception as e:
         app_logger.error(f"Error in get_jd_by_id: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
-
 
 @router.post(path="", summary="Upload a new Job Description")
 async def upload_jd(file: UploadFile = File(...)):

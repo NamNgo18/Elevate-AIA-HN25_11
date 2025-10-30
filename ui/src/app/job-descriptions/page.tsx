@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -10,63 +10,98 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Trash2, Upload } from "lucide-react";
+import { Download, Trash2, Upload } from "lucide-react";
 import { UploadJDDialog } from "@/components/job-descriptions/UploadJDDialog";
 import { FindCandidateDialog } from "@/components/job-descriptions/FindCandidateDialog";
 
 interface JobDescription {
   id: string;
   name: string;
-  uploadedBy: string;
   uploadDate: string;
 }
 
-const mockJDs: JobDescription[] = [
-  {
-    id: "JD-001",
-    name: "Senior Frontend Developer",
-    uploadedBy: "Sarah Johnson",
-    uploadDate: "2025-10-20",
-  },
-  {
-    id: "JD-002",
-    name: "Full Stack Engineer",
-    uploadedBy: "Michael Chen",
-    uploadDate: "2025-10-22",
-  },
-  {
-    id: "JD-003",
-    name: "Product Manager",
-    uploadedBy: "Emily Davis",
-    uploadDate: "2025-10-25",
-  },
-  {
-    id: "JD-004",
-    name: "UX Designer",
-    uploadedBy: "Sarah Johnson",
-    uploadDate: "2025-10-26",
-  },
-];
-
 export default function App() {
-  const [jobDescriptions, setJobDescriptions] =
-    useState<JobDescription[]>(mockJDs);
+  const [jobDescriptions, setJobDescriptions] = useState<JobDescription[]>([]);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [candidateDialogOpen, setCandidateDialogOpen] = useState(false);
   const [selectedJD, setSelectedJD] = useState<JobDescription | null>(null);
 
+  useEffect(() => {
+    const fetchJDs = async () => {
+      const response = await fetch("http://127.0.0.1:8000/jd");
+      const data = await response.json();
+      console.log(data);
+      setJobDescriptions(data.data);
+    };
+    fetchJDs();
+  }, []);
+
   const handleDelete = (id: string) => {
+    //handle delete in backend
+    const deleteJD = async () => {
+      await fetch(`http://127.0.0.1:8000/jd/${id}`, {
+        method: "DELETE",
+      });
+    };
+    deleteJD();
     setJobDescriptions(jobDescriptions.filter((jd) => jd.id !== id));
   };
 
-  const handleUploadSuccess = (fileName: string) => {
-    const newJD: JobDescription = {
-      id: `JD-${String(jobDescriptions.length + 1).padStart(3, "0")}`,
-      name: fileName.replace(/\.(docx|pdf)$/i, ""),
-      uploadedBy: "Current User",
-      uploadDate: new Date().toISOString().split("T")[0],
+  const handleDownload = (id: string) => {
+    //handle delete in backend
+    const downloadJD = async () => {
+      debugger;
+      const response = await fetch(`http://127.0.0.1:8000/jd/${id}`, {
+        method: "GET",
+      });
+      const filenameRegex = /filename="?([^"]+)"?/;
+      const disposition = response.headers.get("Content-Disposition") || "";
+      let filename = `${id}.bin`; // A default fallback filename
+
+      if (disposition) {
+        // --- New Logic Start ---
+
+        // 1. Try the new RFC 5987 format (filename*=)
+        // Example: filename*=utf-8''Job%20Description.docx
+        const filenameStarRegex = /filename\*=utf-8''([^;]+)/i;
+        const matchesStar = filenameStarRegex.exec(disposition);
+
+        if (matchesStar && matchesStar[1]) {
+          // We found it! Decode the URL-encoded string
+          filename = decodeURIComponent(matchesStar[1]);
+        } else {
+          // 2. Fallback to the old RFC 2183 format (filename=)
+          // Example: filename="Job Description.docx"
+          const filenameRegex = /filename="?([^"]+)"?/;
+          const matches = filenameRegex.exec(disposition);
+
+          if (matches && matches[1]) {
+            filename = matches[1];
+          }
+        }
+        // --- New Logic End ---
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement("a");
+      link.href = url;
+      document.body.appendChild(link);
+      //download file with the original name can be docx or pdf
+      link.setAttribute("download", filename);
+      link.click();
+      link.parentNode?.removeChild(link);
     };
-    setJobDescriptions([...jobDescriptions, newJD]);
+    downloadJD();
+  };
+
+  const handleUploadSuccess = (fileName: string) => {
+    const fetchJDs = async () => {
+      const response = await fetch("http://127.0.0.1:8000/jd");
+      const data = await response.json();
+      console.log(data);
+      setJobDescriptions(data.data);
+    };
+    fetchJDs();
   };
 
   const handleFindCandidate = (jd: JobDescription) => {
@@ -100,7 +135,6 @@ export default function App() {
               <TableRow>
                 <TableHead>ID</TableHead>
                 <TableHead>JD Name</TableHead>
-                <TableHead>Who Uploaded</TableHead>
                 <TableHead>Upload Date</TableHead>
                 <TableHead className="text-center">Actions</TableHead>
               </TableRow>
@@ -108,11 +142,15 @@ export default function App() {
             <TableBody>
               {jobDescriptions.map((jd) => (
                 <TableRow key={jd.id}>
-                  <TableCell>{jd.id}</TableCell>
+                  <TableCell>{jd.id.substring(0, 8) + "..."}</TableCell>
                   <TableCell>{jd.name}</TableCell>
-                  <TableCell>{jd.uploadedBy}</TableCell>
-                  <TableCell>
-                    {new Date(jd.uploadDate).toLocaleDateString()}
+                  <TableCell suppressHydrationWarning>
+                    {new Date(
+                      jd.uploadDate.replace(
+                        /(\d{4})(\d{2})(\d{2})/,
+                        "$1-$2-$3T",
+                      ),
+                    ).toLocaleString()}
                   </TableCell>
                   <TableCell>
                     <div className="flex justify-center gap-2">
@@ -136,6 +174,13 @@ export default function App() {
                         onClick={() => handleDelete(jd.id)}
                       >
                         <Trash2 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleDownload(jd.id)}
+                      >
+                        <Download className="h-4 w-4" />
                       </Button>
                     </div>
                   </TableCell>
