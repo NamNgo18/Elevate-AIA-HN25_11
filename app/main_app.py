@@ -40,7 +40,7 @@ def _setup_api(app: FastAPI = None) -> None:
     app.include_router(speech_router, prefix = "/routes/speech")
     app.include_router(jd_router, prefix="/routes/jd")
     app.include_router(cv_router, prefix="/routes/cv")
-    app.include_router(speech_router, prefix = "/routes/qna")
+    app.include_router(qna_router, prefix = "/routes/qna")
 
 # ========================================
 #           Backend FastAPI app

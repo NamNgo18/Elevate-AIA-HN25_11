@@ -3,7 +3,6 @@ import copy
 
 from enum                       import Enum
 from threading                  import Lock
-from ..utilities.log_manager    import LoggingManager
 
 __all__ = ["SessionManager", "SessionPhase"]
 
@@ -11,12 +10,12 @@ __all__ = ["SessionManager", "SessionPhase"]
 #        QnA Session Phases
 # ========================================
 class SessionPhase(Enum):
-    INTRO           = 1
-    READINESS       = 2
-    INTERVIEW       = 3
-    POST_INTERVIEW  = 4
-    COMPLETED       = 5
-    UNKNOWN         = 99
+    INTRO     = 1
+    READINESS = 2
+    INTERVIEW = 3
+    WARMUP    = 4
+    COMPLETED = 5
+    UNKNOWN   = 99
 
 # ========================================
 #    QnA Session Manager
@@ -51,14 +50,7 @@ class SessionManager:
     def get_session(self, session_id: str = None) -> str:
         return self._sessions.get(session_id) if session_id else None
     
-    def delete_session(self, session_id: str = None) -> bool:
-        with self._session_lock:
-            if session_id in self._sessions:
-                del self._sessions[session_id]
-                return True
-            return False
-
-    def trim_history(self, session_id: str = None, max_hst: int = 20, msg_nb_first: int = 6) -> list:
+    def get_trim_history(self, session_id: str = None, max_hst: int = 20, msg_nb_first: int = 6) -> list:
         if session_id not in self._sessions:
             return None
 
@@ -70,3 +62,10 @@ class SessionManager:
         stat = min(msg_nb_first, max_hst)
         end = max_hst - stat
         return chat_hst[:stat] + chat_hst[-end:] if end > 0 else chat_hst[:]
+
+    def delete_session(self, session_id: str = None) -> bool:
+        with self._session_lock:
+            if session_id in self._sessions:
+                del self._sessions[session_id]
+                return True
+            return False
