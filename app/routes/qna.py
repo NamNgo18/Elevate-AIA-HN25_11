@@ -32,31 +32,28 @@ class InterviewAnswerRequest(BaseModel):
 #       Start Interview Session
 # =======================================
 @router.post("/start")
-def handle_interview_begin_session(param_in: InterviewStartRequest):
+async def handle_interview_begin_session(param_in: InterviewStartRequest):
     """
     Initialize interview session
     """
     app_logger = LoggingManager().get_logger("AppLogger")
-    result: dict = {"session_id": None, "error": None}
+    result: dict = {"role": "ai", "session_id": None, "error": None}
 
     params = {
         "phase_state": qna_smgr.SessionPhase.INTRO,
         "sys_prompt": param_in.sys_prompt
     }
 
-    # Get interview questions list
-    #  TODO: Implement question fetching logic
-
     # QnA session instance
     new_ssid: str = qna_smgr.SessionManager().create_session(**params)
     app_logger.info(f"Initializing interview session for session_id: {new_ssid}")
-    svc_status = qna_svc.handle_start_interview(new_ssid)
-    if not svc_status:
+    svc_welcome = await qna_svc.handle_start_interview(new_ssid, param_in.job_description)
+    if not svc_welcome:
         result["error"] = f"Failed to start interview session - ID: {new_ssid}."
         return JSONResponse(content = result, status_code = status.HTTP_400_BAD_REQUEST)
 
     result["session_id"] = new_ssid
-    result["reply"] = svc_status
+    result["reply"] = svc_welcome
     app_logger.info(f"Session {new_ssid} phase updated to {qna_smgr.SessionPhase.INTRO.name}.")
     return JSONResponse(content = result, status_code = status.HTTP_200_OK)
 
@@ -70,7 +67,7 @@ def handle_interview_answer_submission(session_id: str = None, answer: str = Non
     """
     app_logger = LoggingManager().get_logger("AppLogger")
     qna_session_mgr = qna_smgr.SessionManager().get_session(session_id)
-    result: dict = {"question": None, "error": None}
+    result: dict = {"role": "ai", "question": None, "error": None}
     app_logger.info(f"Submitting answer for session_id: {session_id}")
 
     if not qna_session_mgr:
@@ -104,7 +101,7 @@ def handle_terminate_interview_session(session_id: str = None):
     """
     app_logger = LoggingManager().get_logger("AppLogger")
     qna_session_mgr = qna_smgr.SessionManager().get_session(session_id)
-    result: dict = {"deleted": None, "error": None}
+    result: dict = {"role": "ai", "deleted": None, "error": None}
     app_logger.info(f"Deleting interview session for session_id: {session_id}")
 
     if not qna_session_mgr:
