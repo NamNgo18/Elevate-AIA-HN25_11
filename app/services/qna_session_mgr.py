@@ -40,7 +40,7 @@ class SessionManager:
                 "phase": kwargs.get("phase_state", SessionPhase.UNKNOWN),
                 "question": {
                     "total": kwargs.get("total_question", 0),
-                    "current": kwargs.get("current_question", 0),
+                    "current": kwargs.get("current_question", -1),
                     "items": kwargs.get("question_items", [])
                 },
                 "conversation_history": [{"role": "system", "content": kwargs.get("sys_prompt", None)}]
