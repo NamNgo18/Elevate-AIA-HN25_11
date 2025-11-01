@@ -22,9 +22,10 @@ def _setup_api(app: FastAPI = None) -> None:
     # Import routers
     from app.routes.speech              import  router  as  speech_router
     from app.utilities.openAI_helper    import  OpenAIHelper
-
+    from app.routes.jd import router as jd_router
     # Initialize OpenAI Helper singleton
     OpenAIHelper()
+    from app.routes.speech  import  router  as  speech_router
 
     # Setup CORS to allow Streamlit frontend to call backend
     app.add_middleware(
@@ -35,6 +36,7 @@ def _setup_api(app: FastAPI = None) -> None:
     )
     # Include API routes
     app.include_router(speech_router, prefix = "/routes/speech")
+    app.include_router(jd_router, prefix="/jd")
 
 # ========================================
 #           Backend FastAPI app
