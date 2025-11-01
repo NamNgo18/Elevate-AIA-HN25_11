@@ -115,8 +115,8 @@ if __name__ == "__main__":
     # 3. A scanned .pdf file (e.g., 'scanned_cv.pdf')
 
     files_to_process = [
-        # test_dir / "CV_Phan_Dang_Truong.pdf",
-        test_dir / "Quy trình tuyển dụng.docx",
+        test_dir / "CV_Phan_Dang_Truong.pdf",
+        #test_dir / "Quy trình tuyển dụng.docx",
     ]
 
     for file_path in files_to_process:
