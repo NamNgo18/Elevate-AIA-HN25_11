@@ -1,10 +1,20 @@
 import os
 import json
+from pathlib import Path
+
+from dotenv import load_dotenv
 from openai import OpenAI
 from typing import Dict, Any
 
 from data.schema import CV_SCHEMA, JD_SCHEMA
 
+BASE_DIR = Path(__file__).parent.parent.parent.resolve()
+
+# 2. Create the full, absolute path to your .env file
+ENV_FILE_PATH = BASE_DIR / ".env"
+
+# 3. Load the .env file using its absolute path
+load_dotenv(ENV_FILE_PATH)
 
 # --- Main Reusable Function ---
 
@@ -12,7 +22,7 @@ def parse_content_to_json(
         content_text: str,
         parameters_schema: Dict[str, Any],
         model: str = "GPT-4o-mini"
-) -> Dict[str, Any]:
+) -> Dict[str, Any]: # <--- FIX 1: Changed return type to Dict
     """
     Parses raw text content (like a CV or JD) into a structured JSON
     object based on a provided JSON schema.
@@ -25,7 +35,7 @@ def parse_content_to_json(
         model: The OpenAI model to use (e.g., "gpt-4o", "gpt-4-turbo").
 
     Returns:
-        A Python dictionary with the parsed data.
+        A Python dictionary with the parsed data. <--- FIX 2: Updated docstring
 
     Raises:
         ValueError: If the model fails to return tool calls or if the
@@ -34,7 +44,6 @@ def parse_content_to_json(
     """
 
     # 1. Initialize the OpenAI client
-    # Assumes the OPENAI_API_KEY environment variable is set
     try:
         client = OpenAI(
             base_url = os.environ['OPEN_API_URL'],
@@ -46,25 +55,24 @@ def parse_content_to_json(
         print(f"Error initializing OpenAI client: {e}")
         raise
 
-    # 2. Define the tool for the model
-    # The 'parameters_schema' is injected directly into the tool definition.
+    # 2. Define the tool (No changes here)
     openai_tool = {
         "type": "function",
         "function": {
             "name": "parse_content",
             "description": "Parses the raw text (e.g., CV or Job Description) into a structured JSON object according to the required schema.",
-            "parameters": parameters_schema  # <-- Your schema is used here
+            "parameters": parameters_schema
         }
     }
 
-    # 3. Define the messages for the API call
+    # 3. Define the messages (No changes here)
     messages = [
         {"role": "system",
          "content": "You are an expert text parser. Extract all relevant information from the user's text and format it *only* using the 'parse_content' tool. Infer missing fields as 'null' if the information is not found."},
         {"role": "user", "content": content_text}
     ]
 
-    # 4. Make the API call, forcing the model to use the tool
+    # 4. Make the API call (No changes here)
     try:
         completion = client.chat.completions.create(
             model=model,
@@ -76,7 +84,7 @@ def parse_content_to_json(
         print(f"Error during OpenAI API call: {e}")
         raise
 
-    # 5. Extract and parse the JSON response from the tool call
+    # 5. Extract and parse the JSON response
     response_message = completion.choices[0].message
     if not response_message.tool_calls:
         raise ValueError(
@@ -86,16 +94,13 @@ def parse_content_to_json(
 
     try:
         parsed_json = json.loads(json_arguments)
-        return parsed_json
+        return parsed_json  # <--- FIX 3: Return the dictionary directly
     except json.JSONDecodeError as e:
         print(f"--- Error: Failed to parse JSON response from model ---")
         print(f"Model's raw output (string): {json_arguments}")
         print(f"Error details: {e}")
         print(f"--- End of Error ---")
         raise
-
-
-# --- Example Usage (if run as a script) ---
 
 if __name__ == "__main__":
 
@@ -175,7 +180,7 @@ if __name__ == "__main__":
     try:
         # Pass the string content directly
         parsed_jd = parse_content_to_json(sample_jd_text, JD_SCHEMA)
-        print(json.dumps(parsed_jd, indent=2, ensure_ascii=False))
+        print(parsed_jd)
 
     except Exception as e:
         print(f"Failed to parse JD: {e}")

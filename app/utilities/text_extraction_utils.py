@@ -8,31 +8,30 @@ from pathlib import Path
 
 # You have to install OCR on your local machine!
 # link https://github.com/h/pytesseract?tab=readme-ov-file#installation
-def extract_text_from_docx (file_path):
+def extract_text_from_docx (path: str):
     """Extract text from docx file"""
-    print(f"Processing DOCX: {file_path}")
+    print(f"Processing DOCX: {path}")
     try:
-        doc = docx.Document(file_path)
+        doc = docx.Document(path)
         full_text = []
         for para in doc.paragraphs:
             full_text.append(para.text)
         return "\n".join(full_text)
     except Exception as e:
-        print(f"Error reading docx {file_path}: {e}")
+        print(f"Error reading docx {path}: {e}")
         return ""
 
 
-def extract_text_from_pdf(file_path: str) -> str:
+def extract_text_from_pdf(path: str) -> str:
     """
     Extracts text from a .pdf file.
     It tries direct text extraction first. If that fails (e.g., scanned PDF),
     it falls back to OCR.
     """
-    print(f"Processing PDF: {file_path}")
+    print(f"Processing PDF: {path}")
 
-    # --- Attempt 1: Direct Text Extraction ---
     try:
-        doc = fitz.open(file_path)
+        doc = fitz.open(path)
         full_text = []
         for page_num in range(len(doc)):
             page = doc.load_page(page_num)
@@ -57,7 +56,7 @@ def extract_text_from_pdf(file_path: str) -> str:
     # --- Attempt 2: OCR Fallback (for scanned PDFs) ---
     full_text = []
     try:
-        doc = fitz.open(file_path)
+        doc = fitz.open(path)
         for page_num in range(len(doc)):
             page = doc.load_page(page_num)
 
