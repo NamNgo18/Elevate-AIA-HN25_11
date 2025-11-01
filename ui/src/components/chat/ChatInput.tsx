@@ -6,7 +6,7 @@ import { RecordingIndicator } from "./RecordingIndicator";
 import { toast } from "sonner";
 
 interface ChatInputProps {
-  onSendMessage: (message: string) => void;
+  onSendMessage: (sender: string, message: string) => void;
   onToggleCamera: () => void;
   isCameraOn: boolean;
   disabled?: boolean;
@@ -23,7 +23,7 @@ export function ChatInput({
 
   const handleSend = () => {
     if (message.trim() && !disabled) {
-      onSendMessage(message);
+      onSendMessage("user", message);
       setMessage("");
     }
   };
@@ -82,11 +82,13 @@ export function ChatInput({
                 onClick={toggleRecording}
                 disabled={disabled}
               >
-                {isRecording ? (
-                  <MicOff className="h-5 w-5" />
-                ) : (
-                  <Mic className="h-5 w-5" />
-                )}
+                <div className="flex items-center justify-center rounded-full bg-gray-300 w-12 h-12">
+                  {isRecording ? (
+                    <MicOff className="h-5 w-5 text-red-900 animate-pulse" />
+                  ) : (
+                    <Mic className="h-5 w-5 text-gray-900"/>
+                  )}
+                </div>
               </Button>
 
               <Button
@@ -108,7 +110,7 @@ export function ChatInput({
                 onClick={handleSend}
                 disabled={!message.trim() || disabled || isRecording}
               >
-                <Send className="h-5 w-5" />
+                <Send className="h-5 w-5 " />
               </Button>
             </div>
           </div>

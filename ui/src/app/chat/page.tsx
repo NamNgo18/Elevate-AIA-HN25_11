@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { questions } from "@/features/questions/Question.types";
+import apiClient from "@/lib/api-client";
 
 interface Message {
   id: number;
@@ -27,6 +28,7 @@ export default function App() {
   const [isQuestionActive, setIsQuestionActive] = useState(false);
   const [questionTimerKey, setQuestionTimerKey] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [sessionID, setSessionID] = useState<string>("Unknow Session ID");
 
   // Timer
   useEffect(() => {
@@ -50,10 +52,7 @@ export default function App() {
       id: 0,
       role: "ai",
       content: `Hello! I'm your AI interviewer for today's mock interview session. I'm here to help you practice and improve your interview skills.\n\nWe'll go through ${questions.length} questions covering various topics like behavioral, technical, problem-solving, and more.\n\nTake your time with each answer, and remember - this is a safe space to practice!\n\nAre you ready to begin?`,
-      timestamp: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
+      timestamp: new Date().toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"})
     };
     setMessages([welcomeMessage]);
   }, []);
@@ -71,10 +70,7 @@ export default function App() {
         id: messages.length,
         role: "ai",
         content: `Question ${currentQuestionIndex + 1} of ${questions.length}\n\n${question.question}\n\n💡 Tips:\n${question.tips.map((tip) => `• ${tip}`).join("\n")}`,
-        timestamp: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
+        timestamp: new Date().toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"})
       };
       setMessages((prev) => [...prev, newMessage]);
       setCurrentQuestionIndex((prev) => prev + 1);
@@ -88,64 +84,76 @@ export default function App() {
         id: messages.length,
         role: "ai",
         content: `🎉 Congratulations! You've completed all ${questions.length} questions.\n\nYou did great! Remember, practice makes perfect. Keep refining your answers and you'll be ready for any real interview.\n\nWould you like to start over or review your responses?`,
-        timestamp: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
+        timestamp: new Date().toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"})
       };
       setMessages((prev) => [...prev, completeMessage]);
       setIsQuestionActive(false);
     }
   };
 
-  const handleSendMessage = (content: string) => {
+  const handleSendMessage = async (sender: string, content: string) => {
     if (!isInterviewStarted) {
       setIsInterviewStarted(true);
     }
 
-    const userMessage: Message = {
-      id: messages.length,
-      role: "user",
-      content,
-      timestamp: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
+    // Show the user's answer
+    const userAnswer: Message = {
+      id: messages.length + 1,
+      role: (sender == "user") ? "user" : "ai",
+      content: content,
+      timestamp: new Date().toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"})
     };
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userAnswer]);
 
+    // Show the ai's response
+    try {
+      const resp = await apiClient.post("/routes/qna/answer", {
+                                                      session_id: sessionID,
+                                                      answer: content
+                                                    });
+      console.log("Backend response:", resp);
+      const newMessage: Message = {
+        id: messages.length + 1,
+        role: resp.data.role,
+        content: resp.data.reply,
+        timestamp: new Date().toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"})
+      };
+      setMessages((prev) => [...prev, newMessage]);
+    } catch (error) {
+      console.error("Error calling backend:", error);
+    }
     // Stop the question timer when user answers
     setIsQuestionActive(false);
 
     // AI response after user answers
-    setTimeout(() => {
-      const responses = [
-        "Great answer! I appreciate the detail you provided.",
-        "That's a solid response. I like how you structured your answer.",
-        "Excellent! You covered the key points well.",
-        "Good thinking! Your approach shows maturity.",
-        "Nice work! That demonstrates strong understanding.",
-      ];
+    // setTimeout(() => {
+    //   const responses = [
+    //     "Great answer! I appreciate the detail you provided.",
+    //     "That's a solid response. I like how you structured your answer.",
+    //     "Excellent! You covered the key points well.",
+    //     "Good thinking! Your approach shows maturity.",
+    //     "Nice work! That demonstrates strong understanding.",
+    //   ];
 
-      const randomResponse =
-        responses[Math.floor(Math.random() * responses.length)];
+    //   const randomResponse =
+    //     responses[Math.floor(Math.random() * responses.length)];
 
-      const feedbackMessage: Message = {
-        id: messages.length + 1,
-        role: "ai",
-        content: `${randomResponse}\n\nLet's move on to the next question.`,
-        timestamp: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      };
-      setMessages((prev) => [...prev, feedbackMessage]);
+    //   const feedbackMessage: Message = {
+    //     id: messages.length + 1,
+    //     role: "ai",
+    //     content: `${randomResponse}\n\nLet's move on to the next question.`,
+    //     timestamp: new Date().toLocaleTimeString([], {
+    //       hour: "2-digit",
+    //       minute: "2-digit",
+    //     }),
+    //   };
+    //   setMessages((prev) => [...prev, feedbackMessage]);
 
-      // Ask next question after a short delay
-      setTimeout(() => {
-        askNextQuestion();
-      }, 1000);
-    }, 800);
+    //   // Ask next question after a short delay
+    //   setTimeout(() => {
+    //     askNextQuestion();
+    //   }, 1000);
+    // }, 800);
   };
 
   const handleToggleCamera = () => {
@@ -153,9 +161,49 @@ export default function App() {
     toast.info(isCameraOn ? "Camera disabled" : "Camera enabled");
   };
 
-  const handleStartInterview = () => {
-    setIsInterviewStarted(true);
-    askNextQuestion();
+  const handleStartInterview = async () => {
+    const pay_load = {
+      sys_prompt : `You are an AI assistant designed to support and manage interview processes. You guide candidates and help interviewers by analyzing responses and determining readiness at each stage.
+                    Interview main stages:
+                      1. Introduction : Greet the candidate and provide context for the interview. Collect basic info if needed.
+                      2. Readiness : Confirm that the candidate is prepared to start the interview. Check if they have shared their brief and experience. Do not advance if they only say ready.
+                      3. Interview : Conduct the main interview, asking questions relevant to the role and evaluating answers.
+                      4. Warmup : Optional stage for casual or preliminary questions to get the candidate comfortable.
+                    Special rule for handling candidate information:
+                      - If a candidate decided to skip or absolutely refuses to share information, you may move to the next stage without forcing them to provide details.  
+                      - Always respect the candidate is choice while still conducting the interview effectively.`,
+      job_description : {
+          "title": "Software Engineer",
+          "location": "Remote",
+          "type": "Full-time",
+          "responsibilities": [
+              "Develop and maintain web applications.",
+              "Collaborate with teams to design new features.",
+              "Write clean and efficient code."
+          ],
+          "requirements": [
+              "3+ years of experience with JavaScript or Python.",
+              "Strong problem-solving and communication skills."
+          ]
+      }
+    };
+
+    try {
+      const resp = await apiClient.post("/routes/qna/start", pay_load);
+      console.log("Backend response:", resp);
+      const newMessage: Message = {
+        id: messages.length + 1,
+        role: resp.data.role,
+        content: resp.data.reply,
+        timestamp: new Date().toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"})
+      };
+      console.log("NAMNN" + newMessage.id)
+      setMessages((prev) => [...prev, newMessage]);
+      setSessionID(resp.data.session_id);
+      setIsInterviewStarted(true);
+    } catch (error) {
+      console.error("Error calling backend:", error);
+    }
   };
 
   return (
