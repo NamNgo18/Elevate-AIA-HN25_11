@@ -19,14 +19,9 @@ class InterviewStartRequest(BaseModel):
     sys_prompt: str = "You are an AI designed to provide support and assistance for interview processes."
     job_description: dict
 
-class AudioData(BaseModel):
-    activated: bool
-    path: str = None
-
 class InterviewAnswerRequest(BaseModel):
     session_id: str
     answer: str
-    audio: AudioData
 
 # =======================================
 #       Start Interview Session
@@ -37,58 +32,58 @@ async def handle_interview_begin_session(param_in: InterviewStartRequest):
     Initialize interview session
     """
     app_logger = LoggingManager().get_logger("AppLogger")
-    result: dict = {"role": "ai", "session_id": None, "error": None}
+    result: dict = {"role": "ai", "session_id": None, "reply": None, "error": None}
 
     params = {
-        "phase_state": qna_smgr.SessionPhase.INTRO,
+        "phase_state": qna_smgr.SessionPhase.UNKNOWN,
         "sys_prompt": param_in.sys_prompt
     }
 
     # QnA session instance
     new_ssid: str = qna_smgr.SessionManager().create_session(**params)
     app_logger.info(f"Initializing interview session for session_id: {new_ssid}")
-    svc_welcome = await qna_svc.handle_start_interview(new_ssid, param_in.job_description)
-    if not svc_welcome:
+    svc_resp = qna_svc.handle_start_interview(new_ssid, param_in.job_description)
+    if not svc_resp:
         result["error"] = f"Failed to start interview session - ID: {new_ssid}."
         return JSONResponse(content = result, status_code = status.HTTP_400_BAD_REQUEST)
 
     result["session_id"] = new_ssid
-    result["reply"] = svc_welcome
+    result["reply"] = svc_resp
     app_logger.info(f"Session {new_ssid} phase updated to {qna_smgr.SessionPhase.INTRO.name}.")
     return JSONResponse(content = result, status_code = status.HTTP_200_OK)
 
 # =======================================
 #       Process Interview Answer
 # =======================================
-@router.post("/answer/{session_id}")
-def handle_interview_answer_submission(session_id: str = None, answer: str = None):
+@router.post("/answer")
+def handle_interview_answer_submission(param_in: InterviewAnswerRequest):
     """
     Submit answer for the current question in the interview session
     """
     app_logger = LoggingManager().get_logger("AppLogger")
-    qna_session_mgr = qna_smgr.SessionManager().get_session(session_id)
-    result: dict = {"role": "ai", "question": None, "error": None}
-    app_logger.info(f"Submitting answer for session_id: {session_id}")
-
+    qna_session_mgr = qna_smgr.SessionManager().get_session(param_in.session_id)
+    result: dict = {"role": "ai", "session_id": None, "reply": None, "error": None}
     if not qna_session_mgr:
-        app_logger.error(f"Session ID {session_id} not found.")
-        return JSONResponse(content = result, status_code = status.HTTP_400_BAD_REQUEST)
+        app_logger.error(f"Session ID {param_in.session_id} not found.")
+        return JSONResponse(content = result, status_code = status.HTTP_404_NOT_FOUND)
 
-    # current_question_index = qna_session_mgr["question"]["current"]
-    # if current_question_index >= qna_session_mgr["question"]["total"]:
-    #     app_logger.error(f"No more questions available for session ID {session_id}.")
-    #     result["error"] = "No more questions available."
-    #     return JSONResponse(content = result, status_code = status.HTTP_400_BAD_REQUEST)
+    app_logger.info(f"Submitting answer for session_id: {param_in.session_id}")
+    if qna_session_mgr["phase"] == qna_smgr.SessionPhase.INTRO:
+        svc_resp = qna_svc.handle_readniess(param_in.session_id, param_in.answer)
+        if not svc_resp:
+            result["error"] = "Failed to ask the candidate's readniess"
+            return JSONResponse(content = result, status_code = status.HTTP_400_BAD_REQUEST)
 
-    # # Store the answer in conversation history
-    # qna_session_mgr["conversation_history"].append({
-    #     "role": "user",
-    #     "content": answer
-    # })
-    # app_logger.info(f"Answer recorded for session {session_id}, question index {current_question_index}.")
+        result["reply"] = svc_resp
 
-    # # Move to the next question
-    # qna_session_mgr["question"]["current"] += 1
+    elif qna_session_mgr["phase"] == qna_smgr.SessionPhase.READINESS:
+        svc_resp = qna_svc.handle_readniess(param_in.session_id, param_in.answer)
+        if not svc_resp:
+            result["error"] = "Failed to evaluate the candidate's readniess"
+            return JSONResponse(content = result, status_code = status.HTTP_400_BAD_REQUEST)
+
+        result["reply"] = svc_resp
+
     return JSONResponse(content = result, status_code = status.HTTP_200_OK)
 
 # =======================================
