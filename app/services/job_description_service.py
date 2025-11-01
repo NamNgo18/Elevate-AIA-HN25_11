@@ -253,7 +253,7 @@ def __extract_data_to_json__(file_name: str, file_id: str, time: str):
             "jd_id": {file_id},
             "source_file_name": {file_name},
             "scanned_at": {time}
-            "uploaded_by": <<auto_detect>> if not it will be Admin User
+            "uploaded_by": find in the document. Admin User as a default value in case not found
     ==END PRE DATA TO REFERENCE IF OTHER NOT FOUND FIND IN THE DOCUMENT CONTENT==
     """
     file_extension = file_name.split(".")[-1].strip()

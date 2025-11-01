@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 interface JobDescription {
   id: string;
   name: string;
+  uploadBy: string;
   uploadDate: string;
 }
 
@@ -52,10 +53,6 @@ export default function App() {
     {
       accessorKey: "uploadBy",
       header: "Uploaded By",
-      cell: ({ row }) => {
-        // For demo purposes, we return a placeholder name
-        return <span>Admin User</span>;
-      },
     },
     {
       accessorKey: "uploadDate",

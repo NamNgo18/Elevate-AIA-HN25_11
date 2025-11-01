@@ -13,6 +13,8 @@ BASE_DIR = Path(__file__).parent.parent.parent.resolve()
 # 2. Create the full, absolute path to your .env file
 ENV_FILE_PATH = BASE_DIR / ".env"
 
+print(f"env load at {ENV_FILE_PATH}")
+
 # 3. Load the .env file using its absolute path
 load_dotenv(ENV_FILE_PATH)
 
@@ -46,8 +48,8 @@ def parse_content_to_json(
     # 1. Initialize the OpenAI client
     try:
         client = OpenAI(
-            base_url = os.environ['OPEN_API_URL'],
-            api_key = os.environ['OPEN_API_KEY'],
+            base_url = os.environ['OPENAI_URL'],
+            api_key = os.environ['OPENAI_API_KEY'],
         )
         if not client.api_key:
             raise EnvironmentError("OPENAI_API_KEY environment variable not set.")
