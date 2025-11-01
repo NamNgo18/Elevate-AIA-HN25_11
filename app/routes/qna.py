@@ -32,7 +32,13 @@ async def handle_interview_begin_session(param_in: InterviewStartRequest):
     Initialize interview session
     """
     app_logger = LoggingManager().get_logger("AppLogger")
-    result: dict = {"role": "ai", "session_id": None, "reply": None, "error": None}
+    result: dict = {
+        "role": "ai",
+        "session_id": None,
+        "reply": None,
+        "total_question": None,
+        "error": None
+    }
 
     params = {
         "phase_state": qna_smgr.SessionPhase.UNKNOWN,
@@ -47,8 +53,9 @@ async def handle_interview_begin_session(param_in: InterviewStartRequest):
         result["error"] = f"Failed to start interview session - ID: {new_ssid}."
         return JSONResponse(content = result, status_code = status.HTTP_400_BAD_REQUEST)
 
-    result["session_id"] = new_ssid
-    result["reply"] = svc_resp
+    result["session_id"]     = new_ssid
+    result["reply"]          = svc_resp
+    result["total_question"] = qna_smgr.SessionManager().get_session(new_ssid)["question"]["total"]
     app_logger.info(f"Session {new_ssid} phase updated to {qna_smgr.SessionPhase.INTRO.name}.")
     return JSONResponse(content = result, status_code = status.HTTP_200_OK)
 
@@ -80,6 +87,14 @@ def handle_interview_answer_submission(param_in: InterviewAnswerRequest):
         svc_resp = qna_svc.handle_readniess(param_in.session_id, param_in.answer)
         if not svc_resp:
             result["error"] = "Failed to evaluate the candidate's readniess"
+            return JSONResponse(content = result, status_code = status.HTTP_400_BAD_REQUEST)
+
+        result["reply"] = svc_resp
+
+    elif qna_session_mgr["phase"] == qna_smgr.SessionPhase.INTERVIEW:
+        svc_resp = qna_svc.handle_interview(param_in.session_id, param_in.answer)
+        if not svc_resp:
+            result["error"] = "Failed to continious the candidate's interview"
             return JSONResponse(content = result, status_code = status.HTTP_400_BAD_REQUEST)
 
         result["reply"] = svc_resp

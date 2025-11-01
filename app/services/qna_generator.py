@@ -4,8 +4,6 @@ from .qna_session_mgr             import SessionManager, SessionPhase
 from ..utilities.openAI_helper    import OpenAIHelper
 from ..utilities.log_manager      import LoggingManager
 
-__all__ = ["SessionManager", "SessionPhase"]
-
 # Call OpenAI to generate introduction and questions
 FN_VALIDATE_READNIESS = [{
     "type": "function",
@@ -13,7 +11,7 @@ FN_VALIDATE_READNIESS = [{
         "name": "validate_readiness",
         "description": ("Classify readiness: ready / not_ready / uncertain based on the candidate's answer."
                         "If the candidate is ready, say to feel free to start first question"
-                        "Otherwise, the candidate are ready, provid the start with the first question"
+                        "Otherwise, the candidate are ready, please lead to the first question with natural, human-like"
         ),
         "parameters": {
             "type": "object",
@@ -35,7 +33,7 @@ FN_VALIDATE_READNIESS = [{
                     "description": "Should move to next stage interview"
                 }
             },
-            "required": ["stage", "text", "text_summarize", "readiness", "next_stage"]
+            "required": ["text", "text_summarize", "readiness", "next_stage"]
         }
     }
 }]
@@ -122,6 +120,7 @@ FN_START_INTERVIEWING = [{
         }
     }
 }]
+# FN_QNA_INTERVIEW =
 
 def handle_start_interview(session_id: str = None, user_prompt: str = None) -> str:
     """
@@ -150,7 +149,7 @@ def handle_start_interview(session_id: str = None, user_prompt: str = None) -> s
     question_list = ai_response["func"][0]["args"].get("questions", [])
     qna_session_mgr["phase"]               = SessionPhase.INTRO
     qna_session_mgr["question"]["total"]   = len(question_list)
-    qna_session_mgr["question"]["current"] = 0
+    qna_session_mgr["question"]["current"] = -1 # unknown question
     qna_session_mgr["question"]["items"]   = question_list
 
     return ai_response["func"][0]["args"].get("intro", "There're somethings wrong starting the interview!")
@@ -158,7 +157,7 @@ def handle_start_interview(session_id: str = None, user_prompt: str = None) -> s
 # =======================================
 #       Process Interview Answer
 # =======================================
-def handle_readniess(session_id: str = None, user_prompt: str = None) -> str:
+def handle_readniess(session_id: str = None, user_prompt: str = None) -> str | list:
     app_logger = LoggingManager().get_logger("AppLogger")
     qna_session_mgr = SessionManager().get_session(session_id)
     if not qna_session_mgr:
@@ -180,7 +179,7 @@ Context: You asked the candidate to introduce themselves or share a brief about 
 The candidate's answer: {json.dumps(user_prompt)}
 Response:
     text: The assistant’s appropriate next reply. If the candidate has been shared about their brief, ask them for starting interview
-    next_stage: True only if the candidate has provided their brief and experience, or if it was explicitly decided to skip sharing. Only ready is not allow to change stage
+    next_stage: True only if the candidate has provided their brief and experience, or if it was explicitly decided to skip sharing, only ready is not allow to change stage.
 """
         })
     elif SessionPhase.READINESS == qna_session_mgr["phase"]:
@@ -188,11 +187,11 @@ Response:
         params["msg_prompt"].append({
             "role": "user",
             "content": f"""Analyze the candidate is message to determine their readiness.
-Context: You asked the candidate to ready for starting answer some questions
+Context: You asked the candidate to ready for starting interview
 The candidate's answer: {json.dumps(user_prompt)}
-Instructions:
-    text: Decide the next assistant reply
-    next_stage: Whether the candidate can move to the next stage
+Response:
+    text: Decide the next assistant reply. If the candidate has already confirmed they are ready, move on with the interview
+    next_stage: Whether the candidate can move to the next stage if they have already confirmed
 """
         })
 
@@ -202,7 +201,7 @@ Instructions:
                                 msg_prompt = params["msg_prompt"],
                                 func_defs  = params["func_defs"],
                                 func_name  = "auto",
-                                temp = 0.7
+                                temp       = 0.7
                             )
 
     if "error" in ai_response:
@@ -214,14 +213,19 @@ Instructions:
         app_logger.critical(f"No response from OpenAI {ai_resp_func.error}")
         return None
 
-    app_logger.info(f"""\n\nREPLY: {ai_resp_func}\n\nPHASE: {qna_session_mgr['phase']}""")
+    app_logger.info(f"\n\n\nREPLY: {ai_resp_func}\nPHASE: {qna_session_mgr['phase']}\n")
+    ai_reply_text: list = [ai_resp_func.get("text", "There're somethings wrong why readniess!")]
     if ai_resp_func["next_stage"]:
         if SessionPhase.INTRO == qna_session_mgr["phase"]:
-            qna_session_mgr["phase"]               = SessionPhase.READINESS
-            app_logger.info(f"Changed state: {qna_session_mgr['phase']}")
+            qna_session_mgr["phase"] = SessionPhase.READINESS
         elif SessionPhase.READINESS:
-            qna_session_mgr["phase"]               = SessionPhase.INTERVIEW
+            qna_session_mgr["phase"] = SessionPhase.INTERVIEW 
             qna_session_mgr["question"]["current"] += 1
+            ai_reply_text.append(
+                qna_session_mgr["question"]["items"][
+                    qna_session_mgr["question"]["current"]
+                ]["text"]
+            )
         # Save the chat history for using later
         qna_session_mgr["conversation_history"].append({
             "role": "user",
@@ -232,6 +236,37 @@ Instructions:
             "content": ai_resp_func["text"]
         })
     elif "ready" != ai_resp_func["readiness"]:
-        return ai_resp_func.get("text", "There're somethings wrong why readniess!")
+        return ai_reply_text
 
+    app_logger.info(f"PHASE CHANGED: {qna_session_mgr['phase']}\n\n\n")
+    return ai_reply_text
+
+
+def handle_interview(session_id: str = None, user_prompt: str = None) -> str | list:
+    app_logger = LoggingManager().get_logger("AppLogger")
+    qna_session_mgr = SessionManager().get_session(session_id)
+    if not qna_session_mgr:
+        app_logger.error(f"Session ID {session_id} not found.")
+        return None
+
+    prompt = SessionManager().get_trim_history(session_id)
+    app_logger.debug(f"\n\n\n{prompt}\n\n\n")
+    ai_response = OpenAIHelper().make_request(
+                                msg_prompt = prompt,
+                                # func_defs  = FN_QNA_INTERVIEW,
+                                func_name  = "auto",
+                                temp       = 0.7
+                            )
+
+    app_logger.info(f"\n\n\nREPLY: {ai_resp_func}\nPHASE: {qna_session_mgr['phase']}")
+    if "error" in ai_response:
+        app_logger.critical(f"OpenAI call failed..... {ai_response.error}")
+        return None
+
+    ai_resp_func = ai_response["func"][0]["args"]
+    if not ai_resp_func:
+        app_logger.critical(f"No response from OpenAI {ai_resp_func.error}")
+        return None
+
+    app_logger.info(f"PHASE CHANGED: {qna_session_mgr['phase']}\n\n\n")
     return ai_resp_func.get("text", "There're somethings wrong why readniess!")
