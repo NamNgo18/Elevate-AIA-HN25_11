@@ -22,7 +22,7 @@ def _setup_api(app: FastAPI = None) -> None:
     # Import routers
     from app.routes.speech              import  router  as  speech_router
     from app.utilities.openAI_helper    import  OpenAIHelper
-
+    from app.routes.jd import router as jd_router
     # Initialize OpenAI Helper singleton
     OpenAIHelper()
 
@@ -35,6 +35,7 @@ def _setup_api(app: FastAPI = None) -> None:
     )
     # Include API routes
     app.include_router(speech_router, prefix = "/routes/speech")
+    app.include_router(jd_router, prefix="/routes/jd")
 
 # ========================================
 #           Backend FastAPI app
