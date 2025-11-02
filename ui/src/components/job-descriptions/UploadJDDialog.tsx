@@ -73,7 +73,7 @@ export function UploadJDDialog({
       const formData = new FormData();
       formData.append("file", uploadedFile);
 
-      const response = await fetch("http://127.0.0.1:8000/jd", {
+      const response = await fetch("http://127.0.0.1:8000/routes/jd", {
         method: "POST",
         body: formData,
       });

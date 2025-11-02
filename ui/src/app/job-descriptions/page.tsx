@@ -110,7 +110,7 @@ export default function App() {
 
   useEffect(() => {
     const fetchJDs = async () => {
-      const response = await fetch("http://127.0.0.1:8000/jd");
+      const response = await fetch("http://127.0.0.1:8000/routes/jd");
       const data = await response.json();
       console.log(data);
       setJobDescriptions(data.data);
@@ -132,7 +132,7 @@ export default function App() {
   const handleDelete = (id: string) => {
     //handle delete in backend
     const deleteJD = async () => {
-      await fetch(`http://127.0.0.1:8000/jd/${id}`, {
+      await fetch(`http://127.0.0.1:8000/routes/jd/${id}`, {
         method: "DELETE",
       });
     };
@@ -144,7 +144,7 @@ export default function App() {
     //handle delete in backend
     const downloadJD = async () => {
       debugger;
-      const response = await fetch(`http://127.0.0.1:8000/jd/${id}`, {
+      const response = await fetch(`http://127.0.0.1:8000/routes/jd/${id}`, {
         method: "GET",
       });
       const filenameRegex = /filename="?([^"]+)"?/;
@@ -180,7 +180,7 @@ export default function App() {
 
   const handleUploadSuccess = (fileName: string) => {
     const fetchJDs = async () => {
-      const response = await fetch("http://127.0.0.1:8000/jd");
+      const response = await fetch("http://127.0.0.1:8000/routes/jd");
       const data = await response.json();
       console.log(data);
       setJobDescriptions(data.data);
