@@ -22,6 +22,7 @@ export function UploadJDDialog({
 }: UploadJDDialogProps) {
   const [dragActive, setDragActive] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -68,6 +69,7 @@ export function UploadJDDialog({
   };
 
   const handleUpload = async () => {
+    setIsLoading(true);
     if (uploadedFile) {
       //upload file to backend
       const formData = new FormData();
@@ -188,8 +190,11 @@ export function UploadJDDialog({
             <Button variant="outline" onClick={handleClose}>
               Cancel
             </Button>
-            <Button onClick={handleUpload} disabled={!uploadedFile}>
-              Upload JD
+            <Button
+              onClick={handleUpload}
+              disabled={!uploadedFile || isLoading}
+            >
+              {isLoading ? "Uploading..." : "Upload JD"}
             </Button>
           </div>
         </div>

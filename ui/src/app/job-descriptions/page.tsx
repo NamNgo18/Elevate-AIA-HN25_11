@@ -24,6 +24,7 @@ import {
 } from "@tanstack/react-table";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface JobDescription {
   id: string;
@@ -38,7 +39,31 @@ export default function App() {
   const [candidateDialogOpen, setCandidateDialogOpen] = useState(false);
   const [selectedJD, setSelectedJD] = useState<JobDescription | null>(null);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [rowSelection, setRowSelection] = useState({});
+
   const columns: ColumnDef<JobDescription, any>[] = [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
     {
       accessorKey: "id",
       header: "ID",
@@ -74,13 +99,6 @@ export default function App() {
         // Return the button combo JSX here
         return (
           <div className="flex justify-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleInterviewPractice(jd)}
-            >
-              Interview Practice
-            </Button>
             <Button
               variant="default"
               size="sm"
@@ -124,8 +142,10 @@ export default function App() {
     columns,
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    onRowSelectionChange: setRowSelection,
     state: {
       columnFilters,
+      rowSelection,
     },
   });
 
@@ -193,8 +213,23 @@ export default function App() {
     setCandidateDialogOpen(true);
   };
 
-  const handleInterviewPractice = (jd: JobDescription) => {
-    alert(`Starting interview practice for: ${jd.name}`);
+  const handleInterviewPractice = () => {
+    const selectedRowModel = table.getFilteredSelectedRowModel();
+
+    const selectedIds = selectedRowModel.rows.map((row) => row.original.id);
+
+    console.log("Selected JD IDs:", selectedIds);
+
+    if (selectedIds.length === 0) {
+      alert("Please select at least one Job Description to practice.");
+      return;
+    }
+
+    alert(
+      `Starting interview practice for ${selectedIds.length} JD(s): ${selectedIds.join(
+        ", ",
+      )}`,
+    );
   };
 
   return (
@@ -207,10 +242,25 @@ export default function App() {
               Manage and track all your job descriptions
             </p>
           </div>
-          <Button onClick={() => setUploadDialogOpen(true)} className="gap-2">
-            <Upload className="h-4 w-4" />
-            Upload New JD
-          </Button>
+          <div className="flex gap-x-4">
+            <Button
+              className="flex-1 gap-2 p-4"
+              variant="outline"
+              size="sm"
+              onClick={() => handleInterviewPractice()}
+              disabled={!rowSelection || Object.keys(rowSelection).length === 0}
+            >
+              Interview Practice
+            </Button>
+
+            <Button
+              onClick={() => setUploadDialogOpen(true)}
+              className="flex-1 gap-2"
+            >
+              <Upload className="h-4 w-4" />
+              Upload New JD
+            </Button>
+          </div>
         </div>
         <div className="mb-4 w-full items-center gap-4 rounded-lg bg-white px-6 py-4 shadow">
           <Input
