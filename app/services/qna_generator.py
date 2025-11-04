@@ -26,7 +26,7 @@ FN_VALIDATE_READNIESS = [{
                 "text_summarize": {"type": "string"},
                 "readiness": {
                     "type": "string",
-                    "enum": ["ready", "not_ready", "uncertain"]
+                    "enum": ["ready", "not_ready", "uncertain", "skip"]
                 },
                 "next_stage": {
                     "type": "boolean",
@@ -258,15 +258,14 @@ def handle_readniess_interview(session_id: str = None, user_prompt: str = None) 
         params["func_defs"] = FN_ASK_FOR_READINESS
         params["msg_prompt"].append({
         "role": "user",
-        "content": f"""Analyze the candidate is message to determine their readiness.
+        "content": f"""Analyze the candidate is message to determine their readiness and don't create new interview question here
 Context: You asked the candidate to introduce themselves or share a brief about their experience.
 The candidate's answer: {json.dumps(user_prompt)}
-Response:
-    text: The assistant’s appropriate next reply. If the candidate has been shared about their brief, ask them for starting interview
+Response format:
+    text: The assistant’s next reply. If the candidate has been shared about their brief, ask them for starting interview
     next_stage: True only if the candidate has provided their brief and experience, or if it was explicitly decided to skip sharing, only ready is not allow to change stage.
     text_summarize: Provide a concise, first-person summary of your answer, clearly expressing its main idea or meaning
-"""
-        })
+"""})
     elif SessionPhase.READINESS == qna_session_mgr["phase"]:
         params["func_defs"] = FN_VALIDATE_READNIESS
         params["msg_prompt"].append({
@@ -274,11 +273,13 @@ Response:
             "content": f"""Analyze the candidate is message to determine their readiness.
 Context: You asked the candidate to ready for starting interview
 The candidate's answer: {json.dumps(user_prompt)}
-Response:
-    text: Decide the next assistant reply. If the candidate has already confirmed they are ready, move on with the interview
-    next_stage: Whether the candidate can move to the next stage if they have already confirmed
-"""
-        })
+Response: format
+    text: Provide the assistant’s next reply.
+          - If the candidate has confirmed they are ready, ask to start the interview. 
+          - Otherwise, generate a follow-up question or ask for clarification, but do NOT create a new interview question.
+    next_stage: True only if the candidate has confirmed readiness or explicitly skipped sharing; otherwise False.
+    text_summarize: Provide a concise, first-person summary of your reply.
+"""})
 
     ai_response = OpenAIHelper().make_request(
         msg_prompt = params["msg_prompt"],
@@ -344,17 +345,19 @@ def handle_qna_interview(session_id: str = None, user_prompt: str = None) -> str
             "content": f"""You are supporting a candidate in a Q&A interview.
 Context:
     - The candidate is participating in a Q&A interview. They may ask for clarification, pause, or decide to end the interview.
-    - The candidate is currently on question {qna_session_mgr["question"]["current"]} of {qna_session_mgr["question"]["total"]}.
 The candidate's answer: {json.dumps(user_prompt)}
 Tasks:
-    1. text: Confirm the candidate’s answer. Add brief encouragement and acknowledge clarity or effort. If possible, offer a relevant example, link, or short supportive comment.
-    2. followup_needed: Identify if follow-up questions are needed when the answer is unclear, or off-topic.
-    3. next_stage: if the candidate was confirmed definitely to cancel or all questions are done
-    4. Encourage effort, acknowledge clarity, and gently guide if unsure or off-track.
-    5. Maintain a professional, positive, friendly, motivating tone.
-    6. Switch to next state if the queston is reached or the candidate explicit terminate/cancel/stop interview session
-"""
-    })
+    1. text: Evaluate the candidate's answer. Confirm correctness or clarity. Add brief encouragement acknowledging their effort. If possible, provide a relevant example, short explanation, or a reference link to clarify further.
+    2. followup_needed: Determine if a follow-up question is needed when the answer is unclear, incomplete, or off-topic. Return as boolean.
+    3. next_stage: Determine if the candidate wants to terminate or if all questions are completed.
+        - The candidate is currently on question {qna_session_mgr["question"]["current"]} of {qna_session_mgr["question"]["total"]}.
+    4. Encourage effort, acknowledge clarity, and gently guide the candidate if unsure or off-track.
+    5. Maintain a professional, positive, friendly, and motivating tone.
+    6. If next_question is true and the answer is acceptable:
+        - Generate text to clarify or reinforce the concept (can provide a short example or reference link).
+        - Generate text to smoothly transition to the next question.
+    7. If next_question is false, and the answer needs improvement, generate a follow-up question or prompt to help the candidate elaborate.
+"""})
 
     ai_response = OpenAIHelper().make_request(
         msg_prompt = prompt_text,
