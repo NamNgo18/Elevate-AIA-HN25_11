@@ -215,11 +215,16 @@ def handle_start_interview(session_id: str = None, user_prompt: str = None) -> s
         "role": "user",
         "content": f"""
 The job description: {json.dumps(user_prompt)}
-Begin by greeting and welcoming the candidate to the interview. Introduce yourself as the interviewer
-and summarize the position apply in a clear and engaging way.
-After the introduction, generate a dynamic list of interview questions(max 2 quiz) that align with the job is requirements and responsibilities.
-"""
-    })
+Begin by greeting and welcoming the candidate to the interview. Introduce yourself as the AI interviewer and briefly summarize the position they’re applying for in a clear and engaging way.
+    e.g: Hello! I’m your AI interviewer for today’s mock interview session. I’m here to help you practice and improve your interview skills. We’ll go through a few questions covering topics relevant to your role.....
+After the introduction, generate a dynamic list of interview questions (no more than 2 in total) ordered by random difficulty levels — easy, medium, and hard.
+
+And then, ask candidate that could start by sharing a brief overview of their background or experience"
+
+Required:
+    - Ensure that the set of questions includes at least one easy and one hard question that align closely with the job’s key requirements and responsibilities.
+    - The question should be added the text transition to(e.g: Question 1: What's...)
+"""})
     ai_response = OpenAIHelper().make_request(
         msg_prompt = prompt_text,
         func_defs  = FN_START_INTERVIEWING,
@@ -261,7 +266,7 @@ def handle_readniess_interview(session_id: str = None, user_prompt: str = None) 
         "content": f"""Analyze the candidate is message to determine their readiness and don't create new interview question here
 Context: You asked the candidate to introduce themselves or share a brief about their experience.
 The candidate's answer: {json.dumps(user_prompt)}
-Response format:
+Response as:
     text: The assistant’s next reply. If the candidate has been shared about their brief, ask them for starting interview
     next_stage: True only if the candidate has provided their brief and experience, or if it was explicitly decided to skip sharing, only ready is not allow to change stage.
     text_summarize: Provide a concise, first-person summary of your answer, clearly expressing its main idea or meaning
@@ -271,14 +276,14 @@ Response format:
         params["msg_prompt"].append({
             "role": "user",
             "content": f"""Analyze the candidate is message to determine their readiness.
-Context: You asked the candidate to ready for starting interview
+Context: The candidate's confirm their readiness according to the prevous question?
 The candidate's answer: {json.dumps(user_prompt)}
-Response: format
-    text: Provide the assistant’s next reply.
-          - If the candidate has confirmed they are ready, ask to start the interview. 
-          - Otherwise, generate a follow-up question or ask for clarification, but do NOT create a new interview question.
+Response as:
+    text: Ask to start the interview and provide the assistant’s next reply:
+          - If the candidate has confirmed they are ready(next_stage = True), but MUST NOT create a new question.
+          - Otherwise, generate a follow-up question or ask for clarification.
     next_stage: True only if the candidate has confirmed readiness or explicitly skipped sharing; otherwise False.
-    text_summarize: Provide a concise, first-person summary of your reply.
+    text_summarize: Provide a concise, first-person summary of your reply. For example: To clarify, you said.....
 """})
 
     ai_response = OpenAIHelper().make_request(
@@ -347,16 +352,24 @@ Context:
     - The candidate is participating in a Q&A interview. They may ask for clarification, pause, or decide to end the interview.
 The candidate's answer: {json.dumps(user_prompt)}
 Tasks:
-    1. text: Evaluate the candidate's answer. Confirm correctness or clarity. Add brief encouragement acknowledging their effort. If possible, provide a relevant example, short explanation, or a reference link to clarify further.
-    2. followup_needed: Determine if a follow-up question is needed when the answer is unclear, incomplete, or off-topic. Return as boolean.
-    3. next_stage: Determine if the candidate wants to terminate or if all questions are completed.
-        - The candidate is currently on question {qna_session_mgr["question"]["current"]} of {qna_session_mgr["question"]["total"]}.
+    1. text:
+        - Evaluate the candidate’s answer for correctness, clarity, and relevance.  
+        - Provide brief, constructive feedback and encouragement.  
+        - If possible, include a short example, explanation, or a helpful reference link to reinforce understanding.  
+        - Keep your tone professional, friendly, and motivating.
+        e.g: Your explanation of X was clear and well-structured! One example could be...
+    2. followup_needed: Generate a thoughtful follow-up question or prompt that helps the candidate elaborate or clarify their response when the answer is off-topic or provied less information.
+        e.g: 
+            + To calrify.....
+            + What I meant was...
+            + I understand — thanks for letting me know. Let me clarify that question a bit....
+    3. next_stage: "True" only if the candidate wants to terminate or if all questions are completed.
+        e.g: Return "TRUE" because the candidate's answer is acceptable and the completed ({qna_session_mgr["question"]["current"]} == {qna_session_mgr["question"]["total"]}) question.
     4. Encourage effort, acknowledge clarity, and gently guide the candidate if unsure or off-track.
     5. Maintain a professional, positive, friendly, and motivating tone.
-    6. If next_question is true and the answer is acceptable:
-        - Generate text to clarify or reinforce the concept (can provide a short example or reference link).
-        - Generate text to smoothly transition to the next question.
-    7. If next_question is false, and the answer needs improvement, generate a follow-up question or prompt to help the candidate elaborate.
+    6. If "next_question" is "true" and the answer is acceptable:
+        - Provide a short positive text or clarification to reinforce the concept.
+        - Transition smoothly to the next question (e.g: use natural connectors like “Great job on that! Let’s move on to the next question…”).
 """})
 
     ai_response = OpenAIHelper().make_request(
@@ -393,16 +406,21 @@ Tasks:
         return ai_reply_text
     elif ai_resp_func["next_question"]:
         qna_session_mgr["question"]["current"] += 1
-        ai_reply_text.append(
-            qna_session_mgr["question"]["items"][
-                qna_session_mgr["question"]["current"] - 1
-            ]["text"]
-        )
-        # Save the chat history for using later
-        qna_session_mgr["conversation_history"].append({
-            "role": "user",
-            "content": ai_resp_func["text_summarize"]
-        })
+        try:
+            ai_reply_text.append(
+                qna_session_mgr["question"]["items"][
+                    qna_session_mgr["question"]["current"] - 1
+                ]["text"]
+            )
+            # Save the chat history for using later
+            qna_session_mgr["conversation_history"].append({
+                "role": "user",
+                "content": ai_resp_func["text_summarize"]
+            })
+        except:
+            qna_session_mgr["phase"] = SessionPhase.WARMUP
+            qna_session_mgr["question"]["current"] -= 1
+
         qna_session_mgr["conversation_history"].append({
             "role": "assistant",
             "content": ai_resp_func["text"]
@@ -413,7 +431,6 @@ Tasks:
                         qna_session_mgr["question"]["current"] - 1
                     ]["text"]
         })
-
     app_logger.info(f"PHASE CHANGED: {qna_session_mgr['phase']}\n\n\n")
     return ai_reply_text
 
