@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -7,8 +7,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input"; // Thêm Input cho thanh search
 import { CandidateCard } from "./CandidateCard";
-import { Loader2 } from "lucide-react";
+import { Loader2, Search } from "lucide-react"; // Thêm Search icon
 import { DialogDetailCV } from "./DialogDetailCV";
 
 // --- INTERFACES ---
@@ -61,21 +62,25 @@ export function FindCandidateDialog({
   // State to store the entire API data (used for detailed lookup)
   const [allCandidateResults, setAllCandidateResults] = useState<CandidateResult[]>([]);
 
-  // --- ADD STATE TO MANAGE DETAIL DIALOG ---
+  // State to store the search term
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // State to manage detail dialog
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [selectedCandidateDetail, setSelectedCandidateDetail] = useState<{ candidate: CandidateResult } | null>(null);
-  // ---------------------------------------------
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
 
-  // 2. useEffect to call the API
+  // useEffect to call the API
   useEffect(() => {
     if (open && jobDescription?.jd_id) {
       const fetchCandidates = async (jd_id: string) => {
         setIsLoading(true);
         setError(null);
+        // Reset search term when a new job is loaded
+        setSearchTerm("");
         try {
           const response = await fetch(`http://localhost:8000/api/batch-match?jd_id=${jd_id}`);
 
@@ -107,11 +112,25 @@ export function FindCandidateDialog({
     }
   }, [open, jobDescription]);
 
+  // Filter candidates based on the search term
+  const filteredCandidates = useMemo(() => {
+    if (!searchTerm) {
+      return candidates;
+    }
+    const lowerCaseSearch = searchTerm.toLowerCase();
+    return candidates.filter(candidate =>
+      candidate.name.toLowerCase().includes(lowerCaseSearch) ||
+      candidate.email.toLowerCase().includes(lowerCaseSearch) ||
+      candidate.phone_number.includes(lowerCaseSearch)
+    );
+  }, [candidates, searchTerm]);
+
+
   const handleContact = (candidate: Candidate) => {
     window.location.href = `mailto:${candidate.email}`;
   };
 
-  // --- FUNCTION TO HANDLE DETAIL CLICK EVENT ---
+  // Function to handle detail click event
   const handleViewDetail = (candidateBase: Candidate) => {
     // 1. Find the full CandidateResult based on the key (cv_id)
     const detailResult = allCandidateResults.find(
@@ -143,6 +162,19 @@ export function FindCandidateDialog({
             </DialogDescription>
           </DialogHeader>
 
+          {/* ⭐️ SEARCH BAR FOR CANDIDATES */}
+          <div className="relative pb-4">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
+            <Input
+              type="text"
+              placeholder="Search by name, email, or phone..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2 border rounded-md w-full"
+            />
+          </div>
+          {/* ---------------------------------- */}
+
           <ScrollArea className="h-[500px] pr-4">
             <div className="space-y-4">
               {isLoading ? (
@@ -154,12 +186,14 @@ export function FindCandidateDialog({
                 <div className="text-center text-red-500 p-4 border rounded">
                   {error}
                 </div>
-              ) : candidates.length === 0 ? (
+              ) : filteredCandidates.length === 0 ? (
                 <div className="text-center text-gray-500 p-4">
-                  No suitable candidates found for this job.
+                  {searchTerm
+                    ? `No candidates match the search term: "${searchTerm}"`
+                    : "No suitable candidates found for this job."}
                 </div>
               ) : (
-                candidates.map((candidate) => (
+                filteredCandidates.map((candidate) => (
                   <CandidateCard
                     key={candidate.key}
                     candidate={candidate}
