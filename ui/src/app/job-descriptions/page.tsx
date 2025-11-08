@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -10,80 +10,202 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Trash2, Upload, Search, Loader2 } from "lucide-react"; // Thêm Search và Loader2
+import { Download, Trash2, Upload } from "lucide-react";
 import { UploadJDDialog } from "@/components/job-descriptions/UploadJDDialog";
 import { FindCandidateDialog } from "@/components/job-descriptions/FindCandidateDialog";
+import {
+  ColumnFiltersState,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  useReactTable,
+  Row,
+  ColumnDef,
+} from "@tanstack/react-table";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
 
-// ⚠️ Cập nhật Interface để khớp với dữ liệu từ API /api/scan-jd (get_processed_jd_data)
 interface JobDescription {
-  key: string; // Tương đương với id duy nhất
-  jd_id: string; // Mã JD (Ví dụ: JD001)
-  job_title: string; // Tên công việc (Tên JD)
-  uploaded_by: string; // Người tải lên
-  scanned_at: string; // Thời gian quét/Tải lên
+  id: string;
+  name: string;
+  uploadBy: string;
+  uploadDate: string;
 }
 
 export default function App() {
   const [jobDescriptions, setJobDescriptions] = useState<JobDescription[]>([]);
-  const [loading, setLoading] = useState<boolean>(true); // Trạng thái Loading
-  const [error, setError] = useState<string | null>(null); // Trạng thái Lỗi
-
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [candidateDialogOpen, setCandidateDialogOpen] = useState(false);
   const [selectedJD, setSelectedJD] = useState<JobDescription | null>(null);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [rowSelection, setRowSelection] = useState({});
 
-  // --- 1. Tải Dữ liệu từ API ---
+  const columns: ColumnDef<JobDescription, any>[] = [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "id",
+      header: "ID",
+      cell: ({ row }) => {
+        return <span>{row.original.id}</span>;
+      },
+    },
+    {
+      accessorKey: "name",
+      header: "JD Name",
+    },
+    {
+      accessorKey: "uploadBy",
+      header: "Uploaded By",
+    },
+    {
+      accessorKey: "uploadDate",
+      header: "Upload Date",
+      cell: ({ row }) => {
+        const date = new Date(
+          row.original.uploadDate.replace(/(\d{4})(\d{2})(\d{2})/, "$1-$2-$3T"),
+        );
+        return <span>{date.toLocaleDateString()}</span>;
+      },
+    },
+    {
+      id: "actions", // Use 'id' for a column that doesn't map to a data key
+      header: "Actions",
+      cell: ({ row }: { row: Row<JobDescription> }) => {
+        // Get the original JobDescription object from the row
+        const jd = row.original;
+
+        // Return the button combo JSX here
+        return (
+          <div className="flex justify-center gap-2">
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => handleFindCandidate(jd)}
+            >
+              Find Candidate
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => handleDelete(jd.id)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => handleDownload(jd.id)}
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+          </div>
+        );
+      },
+    },
+  ];
+
   useEffect(() => {
     const fetchJDs = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Gọi API của FastAPI
-        const response = await fetch("http://localhost:8000/api/scan-jd");
-
-        if (!response.ok) {
-          throw new Error(`Lỗi HTTP! Status: ${response.status}`);
-        }
-
-        const data: JobDescription[] = await response.json();
-        setJobDescriptions(data);
-
-      } catch (err) {
-        console.error("Lỗi khi tải dữ liệu JD:", err);
-        setError("Không thể kết nối đến Backend hoặc API bị lỗi.");
-      } finally {
-        setLoading(false);
-      }
+      const response = await fetch("http://localhost:3000/routes/jd");
+      const data = await response.json();
+      console.log(data);
+      setJobDescriptions(data.data);
     };
-
     fetchJDs();
   }, []);
 
-  // --- Các hàm xử lý ---
+  const table = useReactTable({
+    data: jobDescriptions,
+    getCoreRowModel: getCoreRowModel(),
+    columns,
+    onColumnFiltersChange: setColumnFilters,
+    getFilteredRowModel: getFilteredRowModel(),
+    onRowSelectionChange: setRowSelection,
+    state: {
+      columnFilters,
+      rowSelection,
+    },
+  });
 
-  // Hàm này cần được cập nhật để gọi API DELETE thực tế sau này
   const handleDelete = (id: string) => {
-    // Logic xóa JD (tạm thời chỉ xóa trong state frontend)
-    setJobDescriptions(jobDescriptions.filter((jd) => jd.jd_id !== id));
-    console.log(`JD ${id} deleted.`);
+    //handle delete in backend
+    const deleteJD = async () => {
+      await fetch(`http://localhost:3000/routes/jd/${id}`, {
+        method: "DELETE",
+      });
+    };
+    deleteJD();
+    setJobDescriptions(jobDescriptions.filter((jd) => jd.id !== id));
   };
 
-  // Hàm này cần được cập nhật để xử lý kết quả API POST upload
-  const handleUploadSuccess = (fileName: string) => {
-    // ⚠️ Trong ứng dụng thực tế, sau khi upload thành công, bạn nên gọi lại fetchJDs()
-    // để làm mới danh sách từ backend, thay vì thêm mock data.
-    alert(`File uploaded: ${fileName}. Please refresh to see the new JD.`);
+  const handleDownload = (id: string) => {
+    //handle delete in backend
+    const downloadJD = async () => {
+      debugger;
+      const response = await fetch(`http://localhost:3000/routes/jd/${id}`, {
+        method: "GET",
+      });
+      const filenameRegex = /filename="?([^"]+)"?/;
+      const disposition = response.headers.get("Content-Disposition") || "";
+      let filename = `${id}.bin`; // A default fallback filename
 
-    // Tạm thời, thêm một JD giả để minh họa (Sẽ bị mất khi refresh)
-    const newJD: JobDescription = {
-      key: `TEMP-${Date.now()}`,
-      jd_id: `JD-${String(jobDescriptions.length + 1).padStart(3, "0")}`,
-      job_title: fileName.replace(/\.(docx|pdf)$/i, ""),
-      uploaded_by: "Current User",
-      scanned_at: new Date().toISOString(),
+      if (disposition) {
+        const filenameStarRegex = /filename\*=utf-8''([^;]+)/i;
+        const matchesStar = filenameStarRegex.exec(disposition);
+
+        if (matchesStar && matchesStar[1]) {
+          filename = decodeURIComponent(matchesStar[1]);
+        } else {
+          const filenameRegex = /filename="?([^"]+)"?/;
+          const matches = filenameRegex.exec(disposition);
+
+          if (matches && matches[1]) {
+            filename = matches[1];
+          }
+        }
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement("a");
+      link.href = url;
+      document.body.appendChild(link);
+      link.setAttribute("download", filename);
+      link.click();
+      link.parentNode?.removeChild(link);
     };
-    setJobDescriptions([...jobDescriptions, newJD]);
+    downloadJD();
+  };
+
+  const handleUploadSuccess = (fileName: string) => {
+    const fetchJDs = async () => {
+      const response = await fetch("http://localhost:3000/routes/jd");
+      const data = await response.json();
+      console.log(data);
+      setJobDescriptions(data.data);
+    };
+    fetchJDs();
   };
 
   const handleFindCandidate = (jd: JobDescription) => {
@@ -91,117 +213,126 @@ export default function App() {
     setCandidateDialogOpen(true);
   };
 
-  const handleInterviewPractice = (jd: JobDescription) => {
-    alert(`Starting interview practice for: ${jd.job_title}`);
-  };
+  const handleInterviewPractice = () => {
+    const selectedRowModel = table.getFilteredSelectedRowModel();
 
-  // --- Hàm chuyển đổi ngày tháng ---
-  const formatUploadDate = (dateString: string) => {
-    try {
-      // Lấy ngày tháng từ chuỗi ISO 8601
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return dateString; // Trả về chuỗi gốc nếu không hợp lệ
-      return date.toLocaleDateString("vi-VN");
-    } catch {
-      return dateString;
+    const selectedIds = selectedRowModel.rows.map((row) => row.original.id);
+
+    console.log("Selected JD IDs:", selectedIds);
+
+    if (selectedIds.length === 0) {
+      alert("Please select at least one Job Description to practice.");
+      return;
     }
+
+    alert(
+      `Starting interview practice for ${selectedIds.length} JD(s): ${selectedIds.join(
+        ", ",
+      )}`,
+    );
   };
 
-
-  // --- Nội dung Render ---
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="mx-auto max-w-7xl">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="mb-2 text-3xl font-bold text-gray-900">Job Descriptions</h1>
+            <h1 className="mb-2 text-gray-900">Job Descriptions</h1>
             <p className="text-gray-600">
-              Manage and track all your job descriptions loaded from the backend.
+              Manage and track all your job descriptions
             </p>
           </div>
-          <Button onClick={() => setUploadDialogOpen(true)} className="gap-2">
-            <Upload className="h-4 w-4" />
-            Upload New JD
-          </Button>
+          <div className="flex gap-x-4">
+            <Button
+              className="flex-1 gap-2 p-4"
+              variant="outline"
+              size="sm"
+              onClick={() => handleInterviewPractice()}
+              disabled={!rowSelection || Object.keys(rowSelection).length === 0}
+            >
+              Interview Practice
+            </Button>
+
+            <Button
+              onClick={() => setUploadDialogOpen(true)}
+              className="flex-1 gap-2"
+            >
+              <Upload className="h-4 w-4" />
+              Upload New JD
+            </Button>
+          </div>
         </div>
-
-        {/* Hiển thị trạng thái Loading */}
-        {loading && (
-          <div className="flex items-center justify-center py-12 text-gray-600">
-            <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-            Đang tải dữ liệu từ Backend...
+        <div className="mb-4 w-full items-center gap-4 rounded-lg bg-white px-6 py-4 shadow">
+          <Input
+            placeholder="Filter by name..."
+            value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+            onChange={(event) =>
+              table.getColumn("name")?.setFilterValue(event.target.value)
+            }
+            className="w-full"
+          />
+          <div className="pt-4 text-sm text-gray-500">
+            <span>
+              Show {table.getFilteredRowModel().rows.length} /{" "}
+              {jobDescriptions.length} JDs
+            </span>
           </div>
-        )}
-
-        {/* Hiển thị lỗi */}
-        {error && (
-          <div className="rounded-md border border-red-400 bg-red-50 p-4 text-red-700">
-            <p className="font-semibold">Lỗi tải dữ liệu:</p>
-            <p>{error}</p>
-          </div>
-        )}
-
-        {/* Bảng dữ liệu chính */}
-        {!loading && !error && (
-          <div className="rounded-lg bg-white shadow overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Mã JD</TableHead> {/* Thay đổi ID thành Mã JD */}
-                  <TableHead>Tiêu đề Công việc</TableHead> {/* Thay đổi JD Name */}
-                  <TableHead>Người tải lên</TableHead> {/* Thay đổi Who Uploaded */}
-                  <TableHead>Thời gian quét</TableHead> {/* Thay đổi Upload Date */}
-                  <TableHead className="text-center">Hành động</TableHead>
+        </div>
+        <div className="rounded-lg bg-white shadow">
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    return (
+                      <TableHead
+                        key={header.id}
+                        // Use cn to merge classes
+                        className={cn(header.id === "actions" && "text-center")}
+                      >
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                      </TableHead>
+                    );
+                  })}
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {jobDescriptions.map((jd) => (
-                  <TableRow key={jd.key}>
-                    <TableCell className="font-medium">{jd.jd_id}</TableCell>
-                    <TableCell>{jd.job_title}</TableCell>
-                    <TableCell>{jd.uploaded_by}</TableCell>
-                    <TableCell>
-                      {formatUploadDate(jd.scanned_at)}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex justify-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleInterviewPractice(jd)}
-                        >
-                          Interview Practice
-                        </Button>
-                        <Button
-                          variant="default"
-                          size="sm"
-                          onClick={() => handleFindCandidate(jd)}
-                          className="gap-1"
-                        >
-                          <Search className="h-4 w-4" />
-                          Find Candidate
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleDelete(jd.jd_id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    ))}
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-
-            {jobDescriptions.length === 0 && (
-              <div className="py-12 text-center text-gray-500">
-                Không có Mô tả Công việc nào được tải lên.
-              </div>
-            )}
-          </div>
-        )}
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="py-12 text-center text-gray-500"
+                  >
+                    No job descriptions uploaded yet. Click "Upload New JD" to
+                    get started.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       <UploadJDDialog
@@ -213,7 +344,7 @@ export default function App() {
       <FindCandidateDialog
         open={candidateDialogOpen}
         onOpenChange={setCandidateDialogOpen}
-        jobDescription={selectedJD ? { jd_id: selectedJD.jd_id } : null}
+        jobDescription={selectedJD ? { jd_id: selectedJD.id } : null}
       />
     </div>
   );

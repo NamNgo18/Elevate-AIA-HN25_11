@@ -9,17 +9,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { Upload, FileText, CheckCircle2, X } from "lucide-react";
 
-interface UploadJDDialogProps {
+interface UploadCVDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUploadSuccess: (fileName: string) => void;
 }
 
-export function UploadJDDialog({
+export function UploadCVDialog({
   open,
   onOpenChange,
   onUploadSuccess,
-}: UploadJDDialogProps) {
+}: UploadCVDialogProps) {
   const [dragActive, setDragActive] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -44,7 +44,7 @@ export function UploadJDDialog({
       if (
         file.type === "application/pdf" ||
         file.type ===
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
       ) {
         setUploadedFile(file);
       } else {
@@ -59,7 +59,7 @@ export function UploadJDDialog({
       if (
         file.type === "application/pdf" ||
         file.type ===
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
       ) {
         setUploadedFile(file);
       } else {
@@ -75,7 +75,7 @@ export function UploadJDDialog({
       const formData = new FormData();
       formData.append("file", uploadedFile);
 
-      const response = await fetch("http://localhost:3000/routes/jd", {
+      const response = await fetch("http://127.0.0.1:8000/routes/cv", {
         method: "POST",
         body: formData,
       });
@@ -98,18 +98,19 @@ export function UploadJDDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Upload New Job Description</DialogTitle>
+          <DialogTitle>Upload New CV</DialogTitle>
           <DialogDescription>
-            Upload a job description document to start finding candidates
+            Upload a cv document to start finding candidates
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
           <div
-            className={`relative rounded-lg border-2 border-dashed p-12 text-center transition-colors ${dragActive
+            className={`relative rounded-lg border-2 border-dashed p-12 text-center transition-colors ${
+              dragActive
                 ? "border-blue-500 bg-blue-50"
                 : "border-gray-300 bg-gray-50"
-              }`}
+            }`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
             onDragOver={handleDrag}
@@ -153,28 +154,28 @@ export function UploadJDDialog({
 
           <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
             <h3 className="mb-3 text-blue-900">
-              Best Practices for JD Scanning
+              Best Practices for CV Scanning
             </h3>
             <ul className="space-y-2 text-blue-800">
               <li className="flex items-start gap-2">
                 <span className="mt-1 text-blue-600">•</span>
-                <span>Include clear job title and position level</span>
+                <span>Use clear and standard section headings.</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-1 text-blue-600">•</span>
-                <span>List required skills and technologies explicitly</span>
+                <span>Save your CV as a PDF or DOCX file.</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-1 text-blue-600">•</span>
-                <span>Specify years of experience required</span>
+                <span>Avoid using images, charts, or tables.</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-1 text-blue-600">•</span>
-                <span>Include educational requirements and certifications</span>
+                <span>Keep formatting simple for easy text extraction.</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-1 text-blue-600">•</span>
-                <span>Use standard formatting with clear sections</span>
+                <span>Include relevant keywords from the job description.</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-1 text-blue-600">•</span>
@@ -193,7 +194,7 @@ export function UploadJDDialog({
               onClick={handleUpload}
               disabled={!uploadedFile || isLoading}
             >
-              {isLoading ? "Uploading..." : "Upload JD"}
+              {isLoading ? "Uploading..." : "Upload CV"}
             </Button>
           </div>
         </div>
