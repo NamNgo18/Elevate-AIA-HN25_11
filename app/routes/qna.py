@@ -122,40 +122,25 @@ def handle_interview_answer_submission(param_in: InterviewAnswerRequest):
     app_logger.info(f"Submitting answer for session_id: {param_in.session_id}")
     if qna_session_mgr["phase"] == qna_smgr.SessionPhase.INTRO:
         svc_resp = qna_svc.handle_readniess_interview(param_in.session_id, param_in.answer)
-        if not svc_resp:
-            result["error"] = "Failed to ask the candidate's readniess"
-            return JSONResponse(content = result, status_code = status.HTTP_400_BAD_REQUEST)
-
-        result["reply"] = svc_resp
-
+        err_msg = "Failed to ask the candidate's readniess"
     elif qna_session_mgr["phase"] == qna_smgr.SessionPhase.READINESS:
         svc_resp = qna_svc.handle_readniess_interview(param_in.session_id, param_in.answer)
-        if not svc_resp:
-            result["error"] = "Failed to evaluate the candidate's readniess"
-            return JSONResponse(content = result, status_code = status.HTTP_400_BAD_REQUEST)
-
-        result["reply"] = svc_resp
-
+        err_msg = "Failed to evaluate the candidate's readniess"
     elif qna_session_mgr["phase"] == qna_smgr.SessionPhase.INTERVIEW:
         svc_resp = qna_svc.handle_qna_interview(param_in.session_id, param_in.answer)
-        if not svc_resp:
-            result["error"] = "Failed to continious the candidate's interview"
-            return JSONResponse(content = result, status_code = status.HTTP_400_BAD_REQUEST)
-
-        result["reply"] = svc_resp
-    
+        err_msg = "Failed to continious the candidate's interview"
     elif qna_session_mgr["phase"] == qna_smgr.SessionPhase.WARMUP:
         svc_resp = qna_svc.handle_warmup_interview(param_in.session_id, param_in.answer)
-        if not svc_resp:
-            result["error"] = "Failed to continious the candidate's interview"
-            return JSONResponse(content = result, status_code = status.HTTP_400_BAD_REQUEST)
-
-        result["reply"] = svc_resp
-    
+        err_msg = "Failed to continious the candidate's warm-up"
     else:
         result["error"] = f"UNKNOWN the phase for interviewing session ID: {param_in.session_id}"
+        return JSONResponse(content = result, status_code = status.HTTP_404_NOT_FOUND)
+
+    if not svc_resp:
+        result["error"] = err_msg
         return JSONResponse(content = result, status_code = status.HTTP_400_BAD_REQUEST)
 
+    result["reply"]                   = svc_resp
     result["question"]["total"]       = qna_session_mgr["question"]["total"]
     result["question"]["current_idx"] = qna_session_mgr["question"]["current"]
     return JSONResponse(content = result, status_code = status.HTTP_200_OK)
