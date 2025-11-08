@@ -1,0 +1,58 @@
+{
+  "basics": {
+    "name": "Nguyễn Minh H",
+    "label": "Backend Developer",
+    "email": "minhh.backend@email.com",
+    "phone_number": "0923813254",
+    "summary": "Lập trình viên Backend với 6 năm kinh nghiệm chuyên về Node.js và Python, tối ưu hóa hệ thống backend cho các ứng dụng lớn.",
+    "location": {
+      "city": "Hồ Chí Minh",
+      "countryCode": "VN"
+    }
+  },
+  "work": [
+    {
+      "name": "TechCorp A",
+      "position": "Senior Backend Developer",
+      "startDate": "2019-01-15",
+      "endDate": "2025-09-30",
+      "highlights": [
+        "Thiết kế và triển khai REST API phục vụ 1 triệu user.",
+        "Tối ưu hóa hệ thống, giảm thời gian phản hồi 40%."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "institution": "Đại học Bách Khoa",
+      "area": "IT",
+      "studyType": "Đại học"
+    }
+  ],
+  "skills": [
+    {
+      "name": "Ngôn ngữ lập trình",
+      "level": "Expert",
+      "keywords": [
+        "Node.js",
+        "Python",
+        "Java"
+      ]
+    },
+    {
+      "name": "Công cụ Backend",
+      "keywords": [
+        "PostgreSQL",
+        "Redis",
+        "Docker"
+      ]
+    }
+  ],
+  "awards": [
+    {
+      "title": "Backend Star",
+      "date": "2021-06-10",
+      "awarder": "TechCorp A"
+    }
+  ]
+}

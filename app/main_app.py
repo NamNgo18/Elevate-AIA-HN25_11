@@ -3,6 +3,7 @@ from fastapi.middleware.cors  import  CORSMiddleware
 
 from dotenv                     import  load_dotenv
 from app.utilities.log_manager  import  LoggingManager
+from typing import List, Dict, Any 
 
 # ========================================
 #           setup config
@@ -21,6 +22,7 @@ def _setup_api(app: FastAPI = None) -> None:
 
     # Import routers
     from app.routes.speech              import  router  as  speech_router
+    from app.routes.jd_load             import  router  as  jd_router
     from app.utilities.openAI_helper    import  OpenAIHelper
 
     # Initialize OpenAI Helper singleton
@@ -35,6 +37,7 @@ def _setup_api(app: FastAPI = None) -> None:
     )
     # Include API routes
     app.include_router(speech_router, prefix = "/routes/speech")
+    app.include_router(jd_router, prefix = "/api") 
 
 # ========================================
 #           Backend FastAPI app
