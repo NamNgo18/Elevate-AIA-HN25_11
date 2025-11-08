@@ -2,6 +2,16 @@
 CV_SCHEMA = {
     "type": "object",
     "properties": {
+        "metadata": {
+            "description": "Thông tin về file CV gốc và thời gian quét (Model sẽ để null nếu không có trong text)",
+            "type": "object",
+            "properties": {
+                "cv_id": {"type": ["string", "null"], "format": "uuid"},
+                "source_file_name": {"type": ["string", "null"]},
+                "uploaded_by": {"type": ["string", "null"]},
+                "scanned_at": {"type": ["string", "null"], "format": "date-time"}
+            }
+        },
         "basics": {
             "type": "object",
             "properties": {
