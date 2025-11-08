@@ -1,0 +1,108 @@
+{
+  "metadata": {
+    "jd_id": "JD002",
+    "source_file_name": "JD_002_DevOps_Engineer.json",
+    "uploaded_by": "hr@devopscompany.com",
+    "scanned_at": "2025-11-01T12:20:00+07:00"
+  },
+  "basic_info": {
+    "job_title": "DevOps Engineer",
+    "level": "Senior",
+    "department": "Infrastructure & Operations",
+    "location": "TP. Hồ Chí Minh",
+    "job_type": "full-time"
+  },
+  "content": {
+    "summary": "Thiết kế, triển khai và bảo trì các hệ thống tự động hóa CI/CD, quản lý cơ sở hạ tầng đám mây (cloud infrastructure) và đảm bảo tính ổn định, khả năng mở rộng của hệ thống sản xuất.",
+    "responsibilities": [
+      "Xây dựng và duy trì các Pipeline CI/CD (GitLab CI, Jenkins, Azure DevOps) để tự động hóa quá trình build, test và deploy ứng dụng.",
+      "Quản lý, vận hành và tối ưu hóa cơ sở hạ tầng trên nền tảng Cloud (AWS hoặc Azure) bằng Infrastructure as Code (IaC) sử dụng Terraform/CloudFormation.",
+      "Thiết lập và quản lý môi trường container hóa sử dụng Docker và Kubernetes/EKS/AKS.",
+      "Phát triển và duy trì hệ thống giám sát (Monitoring) và ghi nhật ký (Logging) sử dụng Prometheus, Grafana, ELK Stack.",
+      "Tối ưu hóa chi phí đám mây và cải thiện hiệu suất hệ thống (performance optimization).",
+      "Hỗ trợ đội ngũ phát triển (Development team) trong việc khắc phục sự cố môi trường sản xuất."
+    ],
+    "benefits": [
+      "Lương cạnh tranh, thưởng theo hiệu suất (KPIs).",
+      "Bảo hiểm sức khỏe cao cấp và kiểm tra sức khỏe định kỳ.",
+      "Cơ hội làm việc với các công nghệ tiên tiến nhất (Cloud-native, Serverless).",
+      "Ngân sách đào tạo, chứng chỉ chuyên môn (AWS/Azure/Kubernetes)."
+    ],
+    "salary_range": {
+      "min": 25000000,
+      "max": 45000000,
+      "currency": "VND",
+      "text": "25,000,000 - 45,000,000 VND gross"
+    }
+  },
+  "match_criteria": {
+    "experience": {
+      "min_years": 3,
+      "max_years": 7,
+      "description": "Có ít nhất 3 năm kinh nghiệm làm việc ở vị trí DevOps, SRE hoặc System Administrator có kinh nghiệm về Cloud."
+    },
+    "education": [
+      {
+        "degree": "Bachelor",
+        "major": "Computer Science",
+        "level": "mandatory"
+      }
+    ],
+    "skills": [
+      {
+        "name": "Cloud Platform (AWS/Azure/GCP)",
+        "type": "technical",
+        "level": "mandatory",
+        "weight": 5
+      },
+      {
+        "name": "IaC (Terraform/CloudFormation)",
+        "type": "technical",
+        "level": "mandatory",
+        "weight": 5
+      },
+      {
+        "name": "Containerization (Docker/Kubernetes)",
+        "type": "technical",
+        "level": "mandatory",
+        "weight": 4
+      },
+      {
+        "name": "CI/CD Tools (Jenkins/GitLab CI/Azure DevOps)",
+        "type": "technical",
+        "level": "mandatory",
+        "weight": 4
+      },
+      {
+        "name": "Scripting (Python/Bash/Go)",
+        "type": "technical",
+        "level": "mandatory",
+        "weight": 3
+      },
+      {
+        "name": "Monitoring/Logging (Prometheus/Grafana/ELK)",
+        "type": "technical",
+        "level": "preferred",
+        "weight": 3
+      }
+    ],
+    "certifications": [
+      {
+        "name": "AWS Certified DevOps Engineer - Professional",
+        "level": "preferred"
+      },
+      {
+        "name": "Certified Kubernetes Administrator (CKA)",
+        "level": "preferred"
+      }
+    ],
+    "keywords": [
+      "SRE",
+      "GitOps",
+      "Ansible",
+      "Serverless",
+      "Microservices",
+      "Linux"
+    ]
+  }
+}

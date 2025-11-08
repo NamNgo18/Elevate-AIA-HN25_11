@@ -3,6 +3,7 @@ from fastapi.middleware.cors  import  CORSMiddleware
 
 from dotenv                     import  load_dotenv
 from app.utilities.log_manager  import  LoggingManager
+from typing import List, Dict, Any 
 
 # ========================================
 #           setup config
@@ -25,6 +26,7 @@ def _setup_api(app: FastAPI = None) -> None:
     from app.routes.jd                  import  router          as  jd_router
     from app.routes.cv                  import  router          as  cv_router
     from app.routes.interview_report    import  router          as  report_router
+    from app.routes.jd_load             import  router          as  jd_router
     from app.utilities.openAI_helper    import  OpenAIHelper
 
     # Initialize OpenAI Helper singleton
@@ -43,6 +45,7 @@ def _setup_api(app: FastAPI = None) -> None:
     app.include_router(cv_router, prefix="/routes/cv")
     app.include_router(qna_router, prefix = "/routes/qna")
     app.include_router(report_router, prefix="/routes/report")
+    app.include_router(jd_router, prefix = "/api") 
 
 # ========================================
 #           Backend FastAPI app

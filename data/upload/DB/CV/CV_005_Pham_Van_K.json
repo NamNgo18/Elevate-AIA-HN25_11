@@ -1,0 +1,58 @@
+{
+  "basics": {
+    "name": "Phạm Văn K",
+    "label": "DevOps Engineer",
+    "email": "phamvk.devops@email.com",
+    "phone_number": "0873813254",
+    "summary": "Kỹ sư DevOps với 7 năm kinh nghiệm triển khai và tối ưu hóa CI/CD cho nhiều sản phẩm phần mềm.",
+    "location": {
+      "city": "Hồ Chí Minh",
+      "countryCode": "VN"
+    }
+  },
+  "work": [
+    {
+      "name": "Software D",
+      "position": "DevOps Team Lead",
+      "startDate": "2018-07-01",
+      "endDate": "2025-10-28",
+      "highlights": [
+        "Triển khai hệ thống CI/CD giúp tăng tốc độ release lên 5 lần.",
+        "Đảm bảo uptime 99.99% cho hệ thống sản phẩm."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "institution": "Đại học Công nghệ TP.HCM",
+      "area": "Quản trị hệ thống",
+      "studyType": "Đại học"
+    }
+  ],
+  "skills": [
+    {
+      "name": "DevOps",
+      "level": "Advanced",
+      "keywords": [
+        "Docker",
+        "Kubernetes",
+        "Jenkins",
+        "GitLab"
+      ]
+    },
+    {
+      "name": "Cloud",
+      "keywords": [
+        "AWS",
+        "Azure"
+      ]
+    }
+  ],
+  "awards": [
+    {
+      "title": "DevOps Excellence",
+      "date": "2023-04-05",
+      "awarder": "Software D"
+    }
+  ]
+}

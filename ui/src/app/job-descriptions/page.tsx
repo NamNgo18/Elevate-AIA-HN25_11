@@ -27,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useRouter } from "next/navigation";
 
+// ⚠️ Cập nhật Interface để khớp với dữ liệu từ API /api/scan-jd (get_processed_jd_data)
 interface JobDescription {
   id: string;
   name: string;
@@ -142,6 +143,37 @@ export default function App() {
     },
   });
 
+  // --- 1. Tải Dữ liệu từ API ---
+  useEffect(() => {
+    const fetchJDs = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Gọi API của FastAPI
+        const response = await fetch("http://localhost:8000/api/scan-jd");
+
+        if (!response.ok) {
+          throw new Error(`Lỗi HTTP! Status: ${response.status}`);
+        }
+
+        const data: JobDescription[] = await response.json();
+        setJobDescriptions(data);
+
+      } catch (err) {
+        console.error("Lỗi khi tải dữ liệu JD:", err);
+        setError("Không thể kết nối đến Backend hoặc API bị lỗi.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchJDs();
+  }, []);
+
+  // --- Các hàm xử lý ---
+
+  // Hàm này cần được cập nhật để gọi API DELETE thực tế sau này
   const handleDelete = (id: string) => {
     //handle delete in backend
     const deleteJD = async () => {
@@ -220,14 +252,28 @@ export default function App() {
     router.push(`/chat?jd_id=${selectedIds[0]}&cv_id=`); // CV ID can be appended later
   };
 
+  // --- Hàm chuyển đổi ngày tháng ---
+  const formatUploadDate = (dateString: string) => {
+    try {
+      // Lấy ngày tháng từ chuỗi ISO 8601
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return dateString; // Trả về chuỗi gốc nếu không hợp lệ
+      return date.toLocaleDateString("vi-VN");
+    } catch {
+      return dateString;
+    }
+  };
+
+
+  // --- Nội dung Render ---
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="mx-auto max-w-7xl">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="mb-2 text-gray-900">Job Descriptions</h1>
+            <h1 className="mb-2 text-3xl font-bold text-gray-900">Job Descriptions</h1>
             <p className="text-gray-600">
-              Manage and track all your job descriptions
+              Manage and track all your job descriptions loaded from the backend.
             </p>
           </div>
           <div className="flex gap-x-4">
@@ -332,7 +378,7 @@ export default function App() {
       <FindCandidateDialog
         open={candidateDialogOpen}
         onOpenChange={setCandidateDialogOpen}
-        jobDescription={selectedJD}
+        jobDescription={selectedJD ? { jd_id: selectedJD.jd_id } : null}
       />
     </div>
   );

@@ -4,20 +4,20 @@ import { Badge } from "@/components/ui/badge";
 import { Mail, Phone, Briefcase } from "lucide-react";
 
 interface Candidate {
-  id: string;
+  key: string;
   name: string;
+  phone_number: string;
   email: string;
-  phone: string;
-  yearsOfExp: number;
   suitabilityScore: number;
 }
 
 interface CandidateCardProps {
   candidate: Candidate;
   onContact: (candidate: Candidate) => void;
+  onDetail: (candidate: Candidate) => void;
 }
 
-export function CandidateCard({ candidate, onContact }: CandidateCardProps) {
+export function CandidateCard({ candidate, onContact, onDetail }: CandidateCardProps) {
   const getScoreColor = (score: number) => {
     if (score >= 90) return "bg-green-500";
     if (score >= 80) return "bg-blue-500";
@@ -41,14 +41,10 @@ export function CandidateCard({ candidate, onContact }: CandidateCardProps) {
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-gray-400" />
-                <span>{candidate.phone}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Briefcase className="h-4 w-4 text-gray-400" />
-                <span>{candidate.yearsOfExp} years of experience</span>
+                <span>{candidate.phone_number}</span>
               </div>
               <div className="mt-6 flex items-center gap-2">
-                <Button onClick={() => onContact(candidate)}>Contact</Button>
+                <Button onClick={() => onDetail(candidate)}>Contact</Button>
               </div>
             </div>
           </div>
