@@ -44,7 +44,7 @@ export function CandidateCard({ candidate, onContact, onDetail }: CandidateCardP
                 <span>{candidate.phone_number}</span>
               </div>
               <div className="mt-6 flex items-center gap-2">
-                <Button onClick={() => onDetail(candidate)}>Contact</Button>
+                <Button onClick={() => onDetail(candidate)}>Detail</Button>
               </div>
             </div>
           </div>
