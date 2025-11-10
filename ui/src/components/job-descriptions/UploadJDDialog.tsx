@@ -75,7 +75,7 @@ export function UploadJDDialog({
       const formData = new FormData();
       formData.append("file", uploadedFile);
 
-      const response = await fetch("http://localhost:3000/routes/jd", {
+      const response = await fetch("http://127.0.0.1:8000/routes/jd", {
         method: "POST",
         body: formData,
       });
@@ -107,8 +107,8 @@ export function UploadJDDialog({
         <div className="space-y-6">
           <div
             className={`relative rounded-lg border-2 border-dashed p-12 text-center transition-colors ${dragActive
-                ? "border-blue-500 bg-blue-50"
-                : "border-gray-300 bg-gray-50"
+              ? "border-blue-500 bg-blue-50"
+              : "border-gray-300 bg-gray-50"
               }`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
