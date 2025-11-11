@@ -3,13 +3,15 @@ import os
 from openai import AzureOpenAI
 from typing import List, Dict, Any
 from pathlib import Path
+from dotenv import load_dotenv
 
 # =======================================================
 # 1. Config Azure OpenAI
 # =======================================================
-AZURE_OPENAI_KEY = "sk-4OctUOPllw2RTYiOZy7-lw"
-AZURE_OPENAI_ENDPOINT = "https://aiportalapi.stu-platform.live/jpe"
-AZURE_OPENAI_DEPLOYMENT_NAME = "gpt-4o-mini"
+load_dotenv()
+AZURE_OPENAI_KEY = os.getenv("OPENAI_API_KEY")
+AZURE_OPENAI_ENDPOINT = os.getenv("OPENAI_URL")
+AZURE_OPENAI_DEPLOYMENT_NAME = os.getenv("OPENAI_QNA_MODEL")
 AZURE_OPENAI_API_VERSION = "2024-07-01-preview"
 
 # Setting Client
@@ -203,8 +205,8 @@ def get_processed_jd_data() -> List[Dict[str, Any]]:
 def get_batch_matching_results(jd_id: str) -> List[Dict[str, Any]]:
   
     current_dir = Path(__file__).resolve().parent.parent.parent
-    jd_folder = os.path.join(current_dir,'data', 'upload','DB', 'JD')
-    cv_folder = os.path.join(current_dir,'data', 'upload','DB', 'CV')
+    jd_folder = os.path.join(current_dir,'data', 'upload', 'JD')
+    cv_folder = os.path.join(current_dir,'data', 'upload', 'CV')
 
     # 1. Đọc dữ liệu
     all_cvs = read_cv_by_json(cv_folder, 'cv')
@@ -257,7 +259,3 @@ def get_batch_matching_results(jd_id: str) -> List[Dict[str, Any]]:
             })
             
     return formatted_results
-
-process = get_batch_matching_results('JD001')
-
-print(process)
