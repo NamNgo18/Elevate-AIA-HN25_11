@@ -49,8 +49,21 @@ export default function App() {
 
   // Start interview with welcome message
   useEffect(() => {
-    handleAddMessage("ai", `🎯 Interview Practice Guidelines\n\nWelcome! Please review these instructions to help you perform successfully in your interview.\n\n🧩 1. Interview Format\n\nThe interview will include a few main questions.\nSome questions may include follow-up (sub) questions to clarify your answers or gather more details.\n\n💬 2. How to Answer\n\nYou have two options for answering:\n✏️ Type your answer in the input box.\n🎤 Speak your answer by clicking the microphone icon.\n\n🌟 3. Tips for a Successful Interview\n\n🌬️ Take a deep breath before you begin.\n🤫 Stay in a quiet, distraction-free space.\n👂 Listen carefully to each question.\n🗣️ Answer clearly and confidently — be concise and natural.\n💡 If you don’t understand a question, it’s okay to ask for clarification.`)
-    setIsInteractionLocked(false)
+    const initialize_interview = async () => {
+      setIsInteractionLocked(true)
+      handleAddMessage("ai", `🎯 Interview Practice Guidelines\n\nWelcome! Please review these instructions to help you perform successfully in your interview.\n\n🧩 1. Interview Format\n\nThe interview will include a few main questions.\nSome questions may include follow-up (sub) questions to clarify your answers or gather more details.\n\n💬 2. How to Answer\n\nYou have two options for answering:\n✏️ Type your answer in the input box.\n🎤 Speak your answer by clicking the microphone icon.\n\n🌟 3. Tips for a Successful Interview\n\n🌬️ Take a deep breath before you begin.\n🤫 Stay in a quiet, distraction-free space.\n👂 Listen carefully to each question.\n🗣️ Answer clearly and confidently — be concise and natural.\n💡 If you don’t understand a question, it’s okay to ask for clarification.`)
+      try {
+        const resp = await apiClient.post("/routes/qna/start", {jd_id: "JD", cv_id: "CV"});
+        console.log("AI response user's question:", resp)
+        setSessionID(resp.data.session_id)
+        console.log(resp.data.reply)
+        setIsInteractionLocked(false)
+      } catch (error) {
+        console.error("Error calling backend:", error)
+      }
+    };
+    // Call the async function
+    initialize_interview()
   }, []);
 
   const formatTime = (totalSeconds: number) => {
@@ -132,28 +145,10 @@ export default function App() {
 
   const handleStartInterview = async () => {
     setIsInteractionLocked(true)
-    const pay_load = {
-      job_description : {
-          "title": "Software Engineer",
-          "location": "Remote",
-          "type": "Full-time",
-          "responsibilities": [
-              "Develop and maintain web applications.",
-              "Collaborate with teams to design new features.",
-              "Write clean and efficient code."
-          ],
-          "requirements": [
-              "3+ years of experience with JavaScript or Python.",
-              "Strong problem-solving and communication skills."
-          ]
-      }
-    };
-
     try {
-      const resp = await apiClient.post("/routes/qna/start", pay_load);
+      const resp = await apiClient.post("/routes/qna/answer", {session_id: sessionID, answer: "Generate no more than 1 in total"});
       console.log("AI start response:", resp);
       setMessages([]); // The conversation should empty after starting
-      setSessionID(resp.data.session_id);
       handleAddMessage(resp.data.role, resp.data.reply)
       setCurrentQuestionIndex(resp.data.question.current_idx)
       setTotalQuestion(resp.data.question.total)

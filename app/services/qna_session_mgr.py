@@ -43,6 +43,8 @@ class SessionManager:
                     "current": kwargs.get("current_question", 0),
                     "items": kwargs.get("question_items", [])
                 },
+                "jd_meta": kwargs.get("jd_meta", []),
+                "cv_meta": kwargs.get("cv_meta", []),
                 "conversation_history": [{"role": "system", "content": kwargs.get("sys_prompt", None)}]
             }
             return session_id
