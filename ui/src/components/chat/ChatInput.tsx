@@ -9,20 +9,22 @@ interface ChatInputProps {
   onSendMessage: (sender: string, message: string) => void;
   onToggleCamera: () => void;
   isCameraOn: boolean;
-  disabled?: boolean;
+  sendingMsgLocked?: boolean;
+  chatInputLocked?: boolean;
 }
 
 export function ChatInput({
   onSendMessage,
   onToggleCamera,
   isCameraOn,
-  disabled,
+  sendingMsgLocked,
+  chatInputLocked,
 }: ChatInputProps) {
   const [message, setMessage] = useState("");
   const [isRecording, setIsRecording] = useState(false);
 
   const handleSend = () => {
-    if (message.trim() && !disabled) {
+    if (message.trim() && !chatInputLocked) {
       onSendMessage("user", message);
       setMessage("");
     }
@@ -70,7 +72,7 @@ export function ChatInput({
                 onKeyDown={handleKeyDown}
                 placeholder="Type your answer here..."
                 className="border-border focus-visible:ring-primary max-h-[200px] min-h-[56px] resize-none rounded-xl"
-                disabled={disabled || isRecording}
+                disabled={chatInputLocked || isRecording}
               />
             </div>
 
@@ -80,7 +82,7 @@ export function ChatInput({
                 size="icon"
                 className="h-14 w-14 rounded-full"
                 onClick={toggleRecording}
-                disabled={disabled}
+                disabled={chatInputLocked}
               >
                 <div className="flex items-center justify-center rounded-full bg-gray-300 w-12 h-12">
                   {isRecording ? (
@@ -108,7 +110,7 @@ export function ChatInput({
                 size="icon"
                 className="bg-primary hover:bg-primary/90 h-14 w-14 rounded-full"
                 onClick={handleSend}
-                disabled={!message.trim() || disabled || isRecording}
+                disabled={!message.trim() || sendingMsgLocked || chatInputLocked || isRecording}
               >
                 <Send className="h-5 w-5 " />
               </Button>
