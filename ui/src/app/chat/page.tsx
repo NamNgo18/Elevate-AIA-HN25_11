@@ -26,6 +26,7 @@ export default function App() {
   const [interviewTime, setInterviewTime] = useState(0);
   const [isInterviewStarted, setIsInterviewStarted] = useState(false);
   const [isQuestionActive, setIsQuestionActive] = useState(false);
+  const [isInteractionLocked, setIsInteractionLocked] = useState(false);
   const [questionTimerKey, setQuestionTimerKey] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [sessionID, setSessionID] = useState<string>("Unknow Session ID");
@@ -49,28 +50,13 @@ export default function App() {
   // Start interview with welcome message
   useEffect(() => {
     handleAddMessage("ai", `🎯 Interview Practice Guidelines\n\nWelcome! Please review these instructions to help you perform successfully in your interview.\n\n🧩 1. Interview Format\n\nThe interview will include a few main questions.\nSome questions may include follow-up (sub) questions to clarify your answers or gather more details.\n\n💬 2. How to Answer\n\nYou have two options for answering:\n✏️ Type your answer in the input box.\n🎤 Speak your answer by clicking the microphone icon.\n\n🌟 3. Tips for a Successful Interview\n\n🌬️ Take a deep breath before you begin.\n🤫 Stay in a quiet, distraction-free space.\n👂 Listen carefully to each question.\n🗣️ Answer clearly and confidently — be concise and natural.\n💡 If you don’t understand a question, it’s okay to ask for clarification.`)
+    setIsInteractionLocked(false)
   }, []);
 
   const formatTime = (totalSeconds: number) => {
     const mins = Math.floor(totalSeconds / 60);
     const secs = totalSeconds % 60;
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
-
-  const askNextQuestion = () => {
-    if (currentQuestionIndex < totalQuestion) {
-      // const question = questions[currentQuestionIndex];
-      // handleAddMessage("ai", `Question ${currentQuestionIndex + 1} of ${questions.length}\n\n${question.question}\n\n💡 Tips:\n${question.tips.map((tip) => `• ${tip}`).join("\n")}`)
-      
-      // Start the question timer
-      setIsQuestionActive(true);
-      setCurrentQuestionIndex((prev) => prev + 1);
-      setQuestionTimerKey((prev) => prev + 1);
-    } else {
-      // Interview complete
-      // handleAddMessage("ai", `🎉 Congratulations! You've completed all ${questions.length} questions.\n\nYou did great! Remember, practice makes perfect. Keep refining your answers and you'll be ready for any real interview.\n\nWould you like to start over or review your responses?`)
-      setIsQuestionActive(false);
-    }
   };
 
   const handleAddMessage = (sender: "ai" | "user", params: string | string[]) => {
@@ -89,8 +75,9 @@ export default function App() {
     if (!isInterviewStarted) {
       setIsInterviewStarted(true);
     }
-
+    
     // Show the user's answer
+    setIsInteractionLocked(true)
     handleAddMessage((sender == "user") ? "user" : "ai", content)
 
     // Show the ai's response
@@ -100,6 +87,7 @@ export default function App() {
       handleAddMessage(resp.data.role, resp.data.reply)
       setCurrentQuestionIndex(resp.data.question.current_idx)
       setTotalQuestion(resp.data.question.total)
+      setIsInteractionLocked(false)
     } catch (error) {
       console.error("Error calling backend:", error);
     }
@@ -143,6 +131,7 @@ export default function App() {
   };
 
   const handleStartInterview = async () => {
+    setIsInteractionLocked(true)
     const pay_load = {
       job_description : {
           "title": "Software Engineer",
@@ -163,11 +152,13 @@ export default function App() {
     try {
       const resp = await apiClient.post("/routes/qna/start", pay_load);
       console.log("AI start response:", resp);
-      setIsInterviewStarted(true);
+      setMessages([]); // The conversation should empty after starting
       setSessionID(resp.data.session_id);
       handleAddMessage(resp.data.role, resp.data.reply)
       setCurrentQuestionIndex(resp.data.question.current_idx)
       setTotalQuestion(resp.data.question.total)
+      setIsInterviewStarted(true);
+      setIsInteractionLocked(false)
     } catch (error) {
       console.error("Error calling backend:", error);
     }
@@ -236,6 +227,7 @@ export default function App() {
                 size="lg"
                 className="rounded-full px-8"
                 onClick={handleStartInterview}
+                disabled={isInteractionLocked}
               >
                 <Sparkles className="mr-2 h-5 w-5" />
                 Start Interview
@@ -252,7 +244,8 @@ export default function App() {
         onSendMessage={handleSendMessage}
         onToggleCamera={handleToggleCamera}
         isCameraOn={isCameraOn}
-        disabled={!isInterviewStarted}
+        chatInputLocked={!isInterviewStarted}
+        sendingMsgLocked={isInteractionLocked}
       />
 
       {/* Video Preview */}

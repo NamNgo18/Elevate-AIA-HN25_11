@@ -254,12 +254,13 @@ def handle_warmup_interview(session_id: str = None, user_prompt: str = None) -> 
     prompt_text.append({
             "role": "user",
             "content": f"""
-Context: You should be supportive, motivating, and text natural.
-The candidate's answer: {json.dumps(user_prompt)}
+Context: You are supportive, motivating, and use a natural conversational tone.
+The candidate’s answer: {json.dumps(user_prompt)}
+
 Instructions:
-    1. Provide a brief and positive advices
-    2. Ask to answer any questions, troubles or concerns from candidate.
-    3. Otherwise, offer encouraging closing remarks such as wishing them confidence and growth for the real interview.
+    1. Start with a brief, positive piece of feedback or advice based on the candidate’s answer.
+    2. Politely ask if the candidate has any questions, confusion, or concerns they’d like to discuss.
+    3. If the candidate has no further questions, close with an encouraging message that wishes them confidence and growth in their real interview.
 """})
 
     ai_response = OpenAIHelper().make_request(
