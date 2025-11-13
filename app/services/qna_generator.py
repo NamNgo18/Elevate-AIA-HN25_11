@@ -374,19 +374,21 @@ Instructions:
 def handle_build_interview_summary(session_id: str = None) -> dict:
     resume: dict = {
         "candidate": {
-            "name": "John Doe",
-            "target_position": "SW-E",
-            "contact_phone": "113",
-            "email_address": "johndoe@email.com"
+            "name": None,
+            "target_position": None,
+            "contact_phone": None,
+            "email_address": None
         },
-        "conversation_history": [
-            {"role": "user", "content": "Hello"},
-            {"role": "ai", "content": "Hi, how can I help?"}
-        ]
+        "conversation_history": []
     }
     app_logger = LoggingManager().get_logger("AppLogger")
     qna_session_mgr = SessionManager().get_session(session_id)
-    resume["candidate"]["target_position"] = qna_session_mgr["jd_meta"].get('basic_info', {}).get('job_title', 'Job title not available')
+    resume["candidate"]["name"] = qna_session_mgr["cv_meta"].get("basics", {}).get("name", "Unknown")
+    resume["candidate"]["target_position"] = qna_session_mgr["jd_meta"].get("basic_info", {}).get("job_title", "Job title not available")
+    resume["candidate"]["contact_phone"] = qna_session_mgr["cv_meta"].get("basics", {}).get("phone", "Unknown")
+    resume["candidate"]["email_address"] = qna_session_mgr["cv_meta"].get("basics", {}).get("email", "Unknown")
+    # Remove the system prompt
+    resume["conversation_history"] = qna_session_mgr["conversation_history"][1:]
 
     app_logger.info(f"Generated interview summary:\n{resume}")
     return resume
