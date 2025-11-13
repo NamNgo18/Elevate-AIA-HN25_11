@@ -9,3 +9,4 @@ pytesseract
 python-multipart
 SpeechRecognition
 gTTS
+sounddevice

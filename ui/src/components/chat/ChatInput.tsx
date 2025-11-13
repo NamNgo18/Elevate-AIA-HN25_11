@@ -4,6 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Mic, MicOff, Video, VideoOff, Send } from "lucide-react";
 import { RecordingIndicator } from "./RecordingIndicator";
 import { toast } from "sonner";
+import apiClient from "@/lib/api-client";
 
 interface ChatInputProps {
   onSendMessage: (sender: string, message: string) => void;
@@ -37,16 +38,20 @@ export function ChatInput({
     }
   };
 
-  const toggleRecording = () => {
+  const toggleRecording = async () => {
     const newRecordingState = !isRecording;
     setIsRecording(newRecordingState);
 
     if (newRecordingState) {
       toast.info("Recording started");
       // In a real app, this would start voice recording
+      const resp = await apiClient.post("/routes/speech/voice", null, {params: {action : "start"}})
+      console.log("AI response user's question:", resp)
     } else {
       toast.info("Recording stopped");
       // In a real app, this would stop voice recording and process the audio
+      const resp = await apiClient.post("/routes/speech/voice", null, {params: {action : "stop"}})
+      console.log("AI response user's question:", resp)
     }
   };
 

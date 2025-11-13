@@ -1,9 +1,9 @@
 import asyncio
 
-from fastapi                    import status
-from fastapi                    import APIRouter
+from fastapi                    import APIRouter, status, Query
 from fastapi.responses          import JSONResponse
 from ..utilities.log_manager    import LoggingManager
+from ..utilities.voice_recorder import VoiceRecorder
 from ..services                 import speech_convertor
 
 router = APIRouter()
@@ -58,6 +58,34 @@ async def get_speech_to_text(audio_path: str = None) -> dict:
 
     result["text"] = text_converted
     app_logger.info("Handle convert speech to text successfully.")
+    return JSONResponse(content = result, status_code = status.HTTP_200_OK)
+
+# =======================================
+@router.post("/voice")
+def hanlde_start_record_voice(action: str = Query(..., regex="^(start|stop)$")):
+    app_logger = LoggingManager().get_logger("AppLogger")
+    result: dict = {
+        "is_recorded": False,
+        "audio_path": None,
+        "error": None
+    }
+    if action == "start":
+        resp_voice_rec = VoiceRecorder().start()
+        resp_voice_err = "Failed to start recording voice."
+    elif action == "stop":
+        resp_voice_rec = VoiceRecorder().stop()
+        result["audio_path"] = str(resp_voice_rec) if resp_voice_rec else None
+        resp_voice_err = "Failed to stop recorder."
+    else:
+        resp_voice_rec = None
+        resp_voice_err = "Invalid param to perform action."
+
+    if not resp_voice_rec:
+        app_logger.error(resp_voice_err)
+        result["error"] = resp_voice_err
+        return JSONResponse(content = result, status_code = status.HTTP_400_BAD_REQUEST)
+
+    result["is_recorded"] = True
     return JSONResponse(content = result, status_code = status.HTTP_200_OK)
 
 # =======================================
