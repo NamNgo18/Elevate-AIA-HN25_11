@@ -60,6 +60,7 @@ export default function App() {
         setIsInteractionLocked(false)
       } catch (error) {
         console.error("Error calling backend:", error)
+        alert("ERROR: " + error.response.data.error)
       }
     };
     // Call the async function
@@ -102,7 +103,8 @@ export default function App() {
       setTotalQuestion(resp.data.question.total)
       setIsInteractionLocked(false)
     } catch (error) {
-      console.error("Error calling backend:", error);
+      console.error("Error calling backend:", error)
+      alert("ERROR: " + error.response.data.error)
     }
     // Stop the question timer when user answers
     setIsQuestionActive(false);
@@ -155,7 +157,8 @@ export default function App() {
       setIsInterviewStarted(true);
       setIsInteractionLocked(false)
     } catch (error) {
-      console.error("Error calling backend:", error);
+      console.error("Error calling backend:", error)
+      alert("ERROR: " + error.response.data.error);
     }
   };
 
