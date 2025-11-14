@@ -8,16 +8,29 @@ export function useInterviewResult() {
   const [interviewReport, setInterviewResult] =
     useState<InterviewResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  async function generateResult(candidateData: CandidateData) {
+  const generateResult = async (candidateData: CandidateData) => {
     setLoading(true);
+    setError(null);
+    try {
+      const result = await interviewResultApi.generateResult(candidateData);
+      setInterviewResult(result);
+      return result;
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to generate result";
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const generatedResult =
-      await interviewResultApi.generateResult(candidateData);
-
-    setInterviewResult(generatedResult);
-    setLoading(false);
-  }
-
-  return { report: interviewReport, loading, generateReport: generateResult };
+  return {
+    interviewReport,
+    loading,
+    error,
+    generateResult,
+  };
 }

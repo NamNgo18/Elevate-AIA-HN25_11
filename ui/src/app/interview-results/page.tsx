@@ -1,61 +1,66 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { InterviewResult } from "@/components/interview-result/InterviewResult";
 import { useInterviewResult } from "@/features/interview-result/useInterviewResult";
+import { CandidateData } from "@/features/interview-result/InterviewResult.types";
 
 function InterviewResultPage() {
-  const [interviewData, setInterviewData] = useState(null);
+  const { interviewReport, loading, generateResult } = useInterviewResult();
 
-  useEffect(() => {
-    // Get interview data from sessionStorage on client side
-    const stored = sessionStorage.getItem("interviewData");
-    if (stored) {
+  const [candidateData, setCandidateData] = useState<CandidateData | null>(
+    () => {
+      if (typeof window === "undefined") return null;
+      const storedData = sessionStorage.getItem("interviewData");
+      if (!storedData) return null;
       try {
-        setInterviewData(JSON.parse(stored));
-      } catch (e) {
-        console.error("Failed to parse interview data:", e);
+        return JSON.parse(storedData);
+      } catch (err) {
+        console.error(
+          "Failed to parse interviewData from sessionStorage:",
+          err,
+        );
+        return null;
+      }
+    },
+  );
+
+  const fetchInterviewResult = useCallback(async () => {
+    if (candidateData && !interviewReport) {
+      try {
+        await generateResult(candidateData);
+      } catch (err) {
+        console.error("Failed to generate interview result:", err);
       }
     }
-  }, []);
+  }, [candidateData, generateResult, interviewReport]);
 
-  console.log("Interview Data:", interviewData);
+  useEffect(() => {
+    fetchInterviewResult();
+  }, [fetchInterviewResult]);
 
-  // Mock interview data (fallback)
-  const mockInterviewData = {
-    candidate: {
-      name: "Sarah Johnson",
-      email_address: "sarah.johnson@email.com",
-      contact_phone: "+1 (555) 123-4567",
-      target_position: "Senior Frontend Developer",
-    },
-    interviewResult: {
-      passed: true,
-      overall_score: 90,
-      technical_skill: 85,
-      problem_solving: 86,
-      communication: 87,
-      experience: 89,
-      pros: [
-        "Excellent understanding of React and modern frontend frameworks",
-        "Strong problem-solving abilities with clear thought process",
-        "Great communication skills and ability to explain complex concepts",
-        "Demonstrated enthusiasm for learning new technologies",
-        "Solid grasp of software design patterns and best practices",
-      ],
-      cons: [
-        "Limited experience with backend technologies",
-        "Could improve knowledge of automated testing strategies",
-        "Less familiar with CI/CD pipelines and DevOps practices",
-      ],
-    },
-  };
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 py-8">
+        <p className="text-gray-600">Generating interview result...</p>
+      </div>
+    );
+  }
 
-  const displayData = interviewData || mockInterviewData;
+  if (!interviewReport || !candidateData) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 py-8">
+        <p className="text-gray-600">No interview data available</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <InterviewResult {...displayData} />
+      <InterviewResult
+        candidate={candidateData.candidate}
+        interviewResult={interviewReport}
+      />
     </div>
   );
 }

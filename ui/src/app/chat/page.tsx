@@ -57,8 +57,8 @@ export default function App() {
       );
       try {
         const resp = await apiClient.post("/routes/qna/start", {
-          jd_id: "JD",
-          cv_id: "CV",
+          jd_id: "JD-001",
+          cv_id: "CV-001",
         });
         console.log("AI response user's question:", resp);
         setSessionID(resp.data.session_id);

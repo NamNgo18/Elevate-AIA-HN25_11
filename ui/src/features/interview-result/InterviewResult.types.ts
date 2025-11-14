@@ -22,6 +22,6 @@ export interface Candidate {
 }
 
 export interface ConversationMessage {
-  role: "user" | "ai";
+  role: "user" | "assistant";
   content: string;
 }
