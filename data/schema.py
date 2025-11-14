@@ -2,6 +2,16 @@
 CV_SCHEMA = {
     "type": "object",
     "properties": {
+        "metadata": {
+            "description": "Thông tin về file CV gốc và thời gian quét (Model sẽ để null nếu không có trong text)",
+            "type": "object",
+            "properties": {
+                "cv_id": {"type": ["string", "null"], "format": "uuid"},
+                "source_file_name": {"type": ["string", "null"]},
+                "uploaded_by": {"type": ["string", "null"]},
+                "scanned_at": {"type": ["string", "null"], "format": "date-time"}
+            }
+        },
         "basics": {
             "type": "object",
             "properties": {
@@ -143,3 +153,162 @@ JD_SCHEMA = {
     },
     "required": ["basic_info", "content", "match_criteria"]
 }
+
+FN_START_INTERVIEWING = [{
+    "type": "function",
+    "function": {
+        "name": "start_interviewing",
+        "description": "Start an interview session by introducing the interviewer, summarizing the job description.The introduction should include a welcome message to the candidate, and a friendly first question about the candidate's customer or project experience.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "intro": {
+                    "type": "string",
+                    "description": "A combined introduction that greets the candidate, thanks them for their interest to join interview, and politely asks about their custome brief or their experience."
+                },
+                "questions": {
+                    "type": "array",
+                    "description": "A list of all interview questions from lower level to higher level.",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "id": {"type": "string"},
+                            "text": {"type": "string"},
+                            "topic": {"type": "string"},
+                            "level": {
+                                "type": "string",
+                                "enum": ["easy", "medium", "hard"]
+                            }
+                        },
+                        "required": ["id", "text", "topic", "level"]
+                    }
+                }
+            },
+            "required": ["intro", "questions"]
+        }
+    }
+}]
+
+FN_VALIDATE_READNIESS = [{
+    "type": "function",
+    "function": {
+        "name": "validate_readiness",
+        "description": "Classify readiness: ready / not_ready / uncertain based on the candidate's answer. If the candidate is ready, say to feel free to start first question. Otherwise, the candidate are ready, please lead to the first question with natural, human-like",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "text": {
+                    "type": "string",
+                    "description": "The assistant's next reply based on the candidate is readiness. Base it on the fact that you asked the candidate to get ready for the interview session."
+                },
+                "text_summarize": {"type": "string"},
+                "readiness": {
+                    "type": "string",
+                    "enum": ["ready", "not_ready", "uncertain", "skip"]
+                },
+                "next_stage": {
+                    "type": "boolean",
+                    "description": "Should move to next stage interview"
+                }
+            },
+            "required": ["text", "text_summarize", "readiness", "next_stage"]
+        }
+    }
+}]
+
+FN_ASK_FOR_READINESS = [{
+    "type": "function",
+    "function": {
+        "name": "ask_for_readiness",
+        "description": (
+                "Generate an appropriate assistant reply based on the candidate's readiness status. "
+                "If 'ready', proceed to start the first question. "
+                "If 'not_ready', respond with reassurance. "
+                "If 'uncertain', gently clarify or guide the candidate."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "text": {
+                    "type": "string",
+                    "description": "The assistant's advice or response based on the candidate's input. If the candidate is ready, the response should invite them to start the interview. If the candidate is not ready or uncertain, the response should provide advice, encouragement, or a gentle prompt for clarification."
+                },
+                "text_summarize": {"type": "string"},
+                "readiness": {
+                    "type": "string",
+                    "enum": ["ready", "not_ready", "uncertain"],
+                    "description": "Classification of the candidate's readiness."
+                },
+                "next_stage": {
+                    "type": "boolean",
+                    "description": "Should move to next stage interview"
+                }
+            },
+            "required": ["text", "text_summarize", "readiness", "next_stage"]
+        }
+    }
+}]
+
+FN_QNA_INTERVIEW = [{
+    "type": "function",
+    "function": {
+        "name": "qna_interview",
+        "description": "Analyzes and manages the interview conversation with a candidate. This function evaluates the candidate's response to a question, summarizes their answer, and determines the next interview action such as asking follow-up questions or proceeding to the next stage.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "text": {
+                    "type": "string",
+                    "description": "A brief, first-person summary of the candidate’s answer and its meaning."
+                },
+                "text_summarize": {
+                    "type": "string",
+                    "description":  "A brief, first-person summary of the candidate’s answer and its meaning. For example: 'I explained how teamwork helps me solve problems effectively.'"
+                },
+                "followup_needed": {
+                    "type": "boolean",
+                    "description": "True if a follow-up question is needed due to lack of understanding, an incomplete answer, or if the candidate lost focus on the question."
+                },
+                "next_question": {
+                    "type": "boolean",
+                    "description": "True if the candidate’s answer is mostly correct or relevant, and the interviewer should proceed with the next question in the same stage."
+                },
+                "next_stage": {
+                    "type": "boolean",
+                    "description": "True if the candidate has decided to terminate the interview conversation or answered all questions."
+                }
+            },
+            "required": ["text", "text_summarize", "followup_needed", "next_question", "next_stage"]
+        }
+    }
+}]
+
+FN_WARMUP_INTERVIEW = [{
+    "type": "function",
+    "function": {
+        "name": "warmup_interview",
+        "description": "Handles the warm-up or closing phase of an AI interview session. Based on the candidate’s responses and the interview state, it either generates encouraging follow-up questions, summarizes the candidate’s performance, or provides a polite and motivating closing message.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "text": {
+                    "type": "string",
+                    "description": "Handles the warm-up or closing phase of an AI-powered interview session. Depending on the candidate’s state, it either generates a follow-up question or provides a polite closing message with encouragement and feedback."
+                },
+                "text_summarize": {
+                    "type": "string",
+                    "description": "A concise summary of the candidate’s performance or main points from their responses. Used to evaluate clarity, structure, and relevance."
+                },
+                "followup_needed": {
+                    "type": "boolean",
+                    "description": "Indicates whether the AI interviewer should ask a follow-up question based on the current response. True = another question needed; False = move on."
+                },
+                "complete_interview": {
+                    "type": "boolean",
+                    "description": "Specifies whether the entire interview session has been completed."
+                }
+            },
+            "required": ["text", "text_summarize", "followup_needed", "complete_interview"]
+        }
+    }
+}]
