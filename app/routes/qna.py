@@ -53,8 +53,6 @@ async def handle_interview_begin_session(param_in: InterviewStartRequest):
         app_logger.error(result["error"])
         return JSONResponse(content = result, status_code = status.HTTP_404_NOT_FOUND)
 
-    qna_svc.handle_build_interview_summary(svc_resp["session_id"])
-
     result["session_id"] = svc_resp["session_id"]
     result["reply"] = "Configuration completed successfully!"
     return JSONResponse(content = result, status_code = status.HTTP_200_OK)
