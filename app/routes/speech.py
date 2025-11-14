@@ -39,7 +39,11 @@ async def get_text_to_speech(text_in: str = "") -> dict:
 @router.post("/stt")
 async def get_speech_to_text(param_in: Request) -> dict:
     app_logger = LoggingManager().get_logger("AppLogger")
-    result: dict = {"text": None, "error": None}
+    result: dict = {
+        "role": "user",
+        "text": None,
+        "error": None
+    }
     audio_path: str = param_in.query_params.get("audio_path", None)
     app_logger.info(f"NAM: {audio_path}")
     try:

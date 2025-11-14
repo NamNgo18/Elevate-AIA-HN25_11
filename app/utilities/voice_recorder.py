@@ -58,8 +58,12 @@ class VoiceRecorder:
             self.recording = False
             self.stream.stop()
             self.stream.close()
-            audio_data = np.concatenate(self.frames, axis = 0)
-            write(self.file_path_nm, self.sample_rate, audio_data)
+            audio_data = np.concatenate(self.frames, axis = 0) # float32 stereo
+            write(
+                self.file_path_nm,
+                self.sample_rate,
+                np.int16(audio_data * 32767)
+            )
             app_logger.info(f"Audio file saved at: {self.file_path_nm}")
             return self.file_path_nm
         except Exception as e:

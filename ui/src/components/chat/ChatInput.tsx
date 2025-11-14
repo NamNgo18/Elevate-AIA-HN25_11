@@ -43,19 +43,19 @@ export function ChatInput({
     const action_nm = !isRecording ? "start" : "stop"
     try {
       toast.info(`Recording ${action_nm === "start" ? "started" : "stopped"}`)
-      resp_voice = await apiClient.post(
+      resp_voice = await apiClient.post (
         "/routes/speech/voice", null, {params: {action : action_nm}}
       )
-      setIsRecording(!isRecording)
       // Stop recording
       if (action_nm === "stop") {
         console.log("Stop recording now...")
-        const resp_stt = await apiClient.post(
+        const resp_stt = await apiClient.post (
           "/routes/speech/stt", null, {params: {audio_path : resp_voice?.data.audio_path}}
         )
-        onSendMessage("user", resp_stt.data.text)
+        onSendMessage(resp_stt.data.role, resp_stt.data.text)
         setMessage("")
       }
+      setIsRecording(!isRecording)
       console.log("AI response user's question:", resp_voice)
     } catch(error) {
       setIsRecording(false)      
@@ -77,7 +77,10 @@ export function ChatInput({
       {isRecording && (
         <div className="bg-muted/50 border-border border-b px-4 py-3">
           <div className="mx-auto flex max-w-4xl items-center justify-center">
-            <RecordingIndicator />
+            <RecordingIndicator
+              isActive={isRecording}
+              onTimeUp={toggleRecording}
+            />
           </div>
         </div>
       )}
