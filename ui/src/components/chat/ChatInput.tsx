@@ -26,32 +26,48 @@ export function ChatInput({
 
   const handleSend = () => {
     if (message.trim() && !chatInputLocked) {
-      onSendMessage("user", message);
-      setMessage("");
+      onSendMessage("user", message)
+      setMessage("")
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
+      e.preventDefault()
+      handleSend()
     }
   };
 
   const toggleRecording = async () => {
-    const newRecordingState = !isRecording;
-    setIsRecording(newRecordingState);
-
-    if (newRecordingState) {
-      toast.info("Recording started");
-      // In a real app, this would start voice recording
-      const resp = await apiClient.post("/routes/speech/voice", null, {params: {action : "start"}})
-      console.log("AI response user's question:", resp)
-    } else {
-      toast.info("Recording stopped");
-      // In a real app, this would stop voice recording and process the audio
-      const resp = await apiClient.post("/routes/speech/voice", null, {params: {action : "stop"}})
-      console.log("AI response user's question:", resp)
+    let resp_voice
+    const action_nm = !isRecording ? "start" : "stop"
+    try {
+      toast.info(`Recording ${action_nm === "start" ? "started" : "stopped"}`)
+      resp_voice = await apiClient.post(
+        "/routes/speech/voice", null, {params: {action : action_nm}}
+      )
+      setIsRecording(!isRecording)
+      // Stop recording
+      if (action_nm === "stop") {
+        console.log("Stop recording now...")
+        const resp_stt = await apiClient.post(
+          "/routes/speech/stt", null, {params: {audio_path : resp_voice?.data.audio_path}}
+        )
+        onSendMessage("user", resp_stt.data.text)
+        setMessage("")
+      }
+      console.log("AI response user's question:", resp_voice)
+    } catch(error) {
+      setIsRecording(false)      
+      console.log("An error: ", error)
+      alert("ERROR: " + error.response.data.error)
+    }
+    // Unlink the audio file to save memory
+    if (action_nm === "stop") {
+      const resp = await apiClient.delete(
+        "/routes/speech/audio", {params: {audio_path : resp_voice?.data.audio_path}}
+      )
+      console.log("Deleted audio file: " + resp_voice?.data.audio_path + " - " + resp.data.deleted ? "TRUE" : "FALSE")
     }
   };
 

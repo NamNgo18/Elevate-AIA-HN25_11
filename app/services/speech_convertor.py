@@ -49,9 +49,9 @@ def generate_stt(audio_link: str = None) -> str:
             app_logger.info("Listening to audio...")
             audio = recognizer.record(source)
 
-        text = recognizer.recognize_google(audio)
-        app_logger.info("Recognized text:", text)
-        return text
+        text_generated = recognizer.recognize_google(audio)
+        app_logger.info(f"Recognized text: {text_generated}")
+        return text_generated
     except srecognizer.UnknownValueError:
         app_logger.critical("Could not understand audio.")
     except srecognizer.RequestError as e:

@@ -1,6 +1,6 @@
 import asyncio
 
-from fastapi                    import APIRouter, status, Query
+from fastapi                    import APIRouter, status, Query, Request
 from fastapi.responses          import JSONResponse
 from ..utilities.log_manager    import LoggingManager
 from ..utilities.voice_recorder import VoiceRecorder
@@ -37,10 +37,11 @@ async def get_text_to_speech(text_in: str = "") -> dict:
 
 # =======================================
 @router.post("/stt")
-async def get_speech_to_text(audio_path: str = None) -> dict:
+async def get_speech_to_text(param_in: Request) -> dict:
     app_logger = LoggingManager().get_logger("AppLogger")
     result: dict = {"text": None, "error": None}
-
+    audio_path: str = param_in.query_params.get("audio_path", None)
+    app_logger.info(f"NAM: {audio_path}")
     try:
         text_converted: str = await asyncio.wait_for(
             asyncio.to_thread(speech_convertor.generate_stt ,audio_path),
@@ -62,13 +63,19 @@ async def get_speech_to_text(audio_path: str = None) -> dict:
 
 # =======================================
 @router.post("/voice")
-def hanlde_start_record_voice(action: str = Query(..., regex="^(start|stop)$")):
-    app_logger = LoggingManager().get_logger("AppLogger")
+def hanlde_start_record_voice(param_in: Request):
     result: dict = {
         "is_recorded": False,
         "audio_path": None,
         "error": None
     }
+    app_logger = LoggingManager().get_logger("AppLogger")
+    action: str = param_in.query_params.get("action", None)
+    if not action:
+        app_logger.error("Invalid param pass through..")
+        result["error"] = "Invalid param pass through.."
+        return JSONResponse(content = result, status_code = status.HTTP_400_BAD_REQUEST)
+
     if action == "start":
         resp_voice_rec = VoiceRecorder().start()
         resp_voice_err = "Failed to start recording voice."
@@ -90,14 +97,14 @@ def hanlde_start_record_voice(action: str = Query(..., regex="^(start|stop)$")):
 
 # =======================================
 @router.delete("/audio")
-def delete_audio_file(file_path: str = None) -> dict:
+def delete_audio_file(param_in: Request) -> dict:
     app_logger = LoggingManager().get_logger("AppLogger")
     result: dict = {"deleted": False, "error": None}
-
-    is_deleted: bool = speech_convertor.unlink_audio_file(file_path)
+    audio_path: str = param_in.query_params.get("audio_path", None)
+    is_deleted: bool = speech_convertor.unlink_audio_file(audio_path)
     if not is_deleted:
-        app_logger.error("Failed to delete the audio file.")
-        result["error"] = "Failed to delete the audio file."
+        result["error"] = f"Failed to delete the audio file: {audio_path}"
+        app_logger.error(result["error"])
         return JSONResponse(content = result, status_code = status.HTTP_400_BAD_REQUEST)
 
     result["deleted"] = True
