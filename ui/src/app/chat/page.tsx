@@ -50,21 +50,27 @@ export default function App() {
   // Start interview with welcome message
   useEffect(() => {
     const initialize_interview = async () => {
-      setIsInteractionLocked(true)
-      handleAddMessage("ai", `🎯 Interview Practice Guidelines\n\nWelcome! Please review these instructions to help you perform successfully in your interview.\n\n🧩 1. Interview Format\n\nThe interview will include a few main questions.\nSome questions may include follow-up (sub) questions to clarify your answers or gather more details.\n\n💬 2. How to Answer\n\nYou have two options for answering:\n✏️ Type your answer in the input box.\n🎤 Speak your answer by clicking the microphone icon.\n\n🌟 3. Tips for a Successful Interview\n\n🌬️ Take a deep breath before you begin.\n🤫 Stay in a quiet, distraction-free space.\n👂 Listen carefully to each question.\n🗣️ Answer clearly and confidently — be concise and natural.\n💡 If you don’t understand a question, it’s okay to ask for clarification.`)
+      setIsInteractionLocked(true);
+      handleAddMessage(
+        "ai",
+        `🎯 Interview Practice Guidelines\n\nWelcome! Please review these instructions to help you perform successfully in your interview.\n\n🧩 1. Interview Format\n\nThe interview will include a few main questions.\nSome questions may include follow-up (sub) questions to clarify your answers or gather more details.\n\n💬 2. How to Answer\n\nYou have two options for answering:\n✏️ Type your answer in the input box.\n🎤 Speak your answer by clicking the microphone icon.\n\n🌟 3. Tips for a Successful Interview\n\n🌬️ Take a deep breath before you begin.\n🤫 Stay in a quiet, distraction-free space.\n👂 Listen carefully to each question.\n🗣️ Answer clearly and confidently — be concise and natural.\n💡 If you don’t understand a question, it’s okay to ask for clarification.`,
+      );
       try {
-        const resp = await apiClient.post("/routes/qna/start", {jd_id: "JD", cv_id: "CV"});
-        console.log("AI response user's question:", resp)
-        setSessionID(resp.data.session_id)
-        console.log(resp.data.reply)
-        setIsInteractionLocked(false)
+        const resp = await apiClient.post("/routes/qna/start", {
+          jd_id: "JD",
+          cv_id: "CV",
+        });
+        console.log("AI response user's question:", resp);
+        setSessionID(resp.data.session_id);
+        console.log(resp.data.reply);
+        setIsInteractionLocked(false);
       } catch (error) {
-        console.error("Error calling backend:", error)
-        alert("ERROR: " + error.response.data.error)
+        console.error("Error calling backend:", error);
+        alert("ERROR: " + error.response.data.error);
       }
     };
     // Call the async function
-    initialize_interview()
+    initialize_interview();
   }, []);
 
   const formatTime = (totalSeconds: number) => {
@@ -73,38 +79,47 @@ export default function App() {
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const handleAddMessage = (sender: "ai" | "user", params: string | string[]) => {
-     const reply_text: string[] = Array.isArray(params) ? params : [params];
-     console.log("AI replied: " + reply_text)
-     const newMsg: Message[] = reply_text.map((text) => ({
-       id: crypto.randomUUID(),
-       role: sender,
-       content: text,
-       timestamp: new Date().toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"})
-     }));
-     setMessages((prev) => [...prev, ...newMsg]);
+  const handleAddMessage = (
+    sender: "ai" | "user",
+    params: string | string[],
+  ) => {
+    const reply_text: string[] = Array.isArray(params) ? params : [params];
+    console.log("AI replied: " + reply_text);
+    const newMsg: Message[] = reply_text.map((text) => ({
+      id: crypto.randomUUID(),
+      role: sender,
+      content: text,
+      timestamp: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    }));
+    setMessages((prev) => [...prev, ...newMsg]);
   };
 
   const handleSendMessage = async (sender: string, content: string) => {
     if (!isInterviewStarted) {
       setIsInterviewStarted(true);
     }
-    
+
     // Show the user's answer
-    setIsInteractionLocked(true)
-    handleAddMessage((sender == "user") ? "user" : "ai", content)
+    setIsInteractionLocked(true);
+    handleAddMessage(sender == "user" ? "user" : "ai", content);
 
     // Show the ai's response
     try {
-      const resp = await apiClient.post("/routes/qna/answer", {session_id: sessionID, answer: content});
+      const resp = await apiClient.post("/routes/qna/answer", {
+        session_id: sessionID,
+        answer: content,
+      });
       console.log("AI response user's question:", resp);
-      handleAddMessage(resp.data.role, resp.data.reply)
-      setCurrentQuestionIndex(resp.data.question.current_idx)
-      setTotalQuestion(resp.data.question.total)
-      setIsInteractionLocked(false)
+      handleAddMessage(resp.data.role, resp.data.reply);
+      setCurrentQuestionIndex(resp.data.question.current_idx);
+      setTotalQuestion(resp.data.question.total);
+      setIsInteractionLocked(false);
     } catch (error) {
-      console.error("Error calling backend:", error)
-      alert("ERROR: " + error.response.data.error)
+      console.error("Error calling backend:", error);
+      alert("ERROR: " + error.response.data.error);
     }
     // Stop the question timer when user answers
     setIsQuestionActive(false);
@@ -146,18 +161,21 @@ export default function App() {
   };
 
   const handleStartInterview = async () => {
-    setIsInteractionLocked(true)
+    setIsInteractionLocked(true);
     try {
-      const resp = await apiClient.post("/routes/qna/answer", {session_id: sessionID, answer: "Generate no more than 1 in total"});
+      const resp = await apiClient.post("/routes/qna/answer", {
+        session_id: sessionID,
+        answer: "Generate no more than 1 in total",
+      });
       console.log("AI start response:", resp);
       setMessages([]); // The conversation should empty after starting
-      handleAddMessage(resp.data.role, resp.data.reply)
-      setCurrentQuestionIndex(resp.data.question.current_idx)
-      setTotalQuestion(resp.data.question.total)
+      handleAddMessage(resp.data.role, resp.data.reply);
+      setCurrentQuestionIndex(resp.data.question.current_idx);
+      setTotalQuestion(resp.data.question.total);
       setIsInterviewStarted(true);
-      setIsInteractionLocked(false)
+      setIsInteractionLocked(false);
     } catch (error) {
-      console.error("Error calling backend:", error)
+      console.error("Error calling backend:", error);
       alert("ERROR: " + error.response.data.error);
     }
   };
@@ -181,7 +199,8 @@ export default function App() {
 
           <div className="flex items-center gap-4">
             <Badge variant="secondary" className="px-3 py-1.5">
-              Question {Math.min(currentQuestionIndex, totalQuestion)} /{" "}{totalQuestion}
+              Question {Math.min(currentQuestionIndex, totalQuestion)} /{" "}
+              {totalQuestion}
             </Badge>
             <div className="bg-accent/50 flex items-center gap-2 rounded-lg px-4 py-2">
               <Clock className="text-accent-foreground h-4 w-4" />
@@ -211,9 +230,11 @@ export default function App() {
               <QuestionTimer
                 key={questionTimerKey}
                 isActive={isQuestionActive}
-                onTimeUp={() => toast.warning(
+                onTimeUp={() =>
+                  toast.warning(
                     "Time's up! But feel free to continue with your answer.",
-                )}
+                  )
+                }
               />
             </div>
           )}

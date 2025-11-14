@@ -1,9 +1,28 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { InterviewResult } from "@/components/interview-result/InterviewResult";
 import { useInterviewResult } from "@/features/interview-result/useInterviewResult";
 
 function InterviewResultPage() {
-  // Mock interview data
-  const interviewData = {
+  const [interviewData, setInterviewData] = useState(null);
+
+  useEffect(() => {
+    // Get interview data from sessionStorage on client side
+    const stored = sessionStorage.getItem("interviewData");
+    if (stored) {
+      try {
+        setInterviewData(JSON.parse(stored));
+      } catch (e) {
+        console.error("Failed to parse interview data:", e);
+      }
+    }
+  }, []);
+
+  console.log("Interview Data:", interviewData);
+
+  // Mock interview data (fallback)
+  const mockInterviewData = {
     candidate: {
       name: "Sarah Johnson",
       email_address: "sarah.johnson@email.com",
@@ -32,9 +51,11 @@ function InterviewResultPage() {
     },
   };
 
+  const displayData = interviewData || mockInterviewData;
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <InterviewResult {...interviewData} />
+      <InterviewResult {...displayData} />
     </div>
   );
 }
