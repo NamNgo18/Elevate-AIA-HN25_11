@@ -7,7 +7,7 @@ export function middleware(request: NextRequest) {
   // If visiting the root `/`, redirect to your default page
   if (pathname === "/") {
     const url = request.nextUrl.clone();
-    url.pathname = "/home"; // Change to your desired default page
+    url.pathname = "/cv"; // Change to your desired default page
     return NextResponse.redirect(url);
   }
 

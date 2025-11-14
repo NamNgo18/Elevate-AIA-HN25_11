@@ -4,7 +4,7 @@ from app.services.report_generator import ReportGenerator
 router = APIRouter()
 service = ReportGenerator()
 
-@router.post("/report")
+@router.post(path="", summary="Generate interview report from interview JSON")
 async def report_interview(interview: dict):
     """Endpoint to report an interview result JSON."""
     try:

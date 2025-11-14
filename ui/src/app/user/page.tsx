@@ -4,7 +4,6 @@ import { useUsers } from "@/features/users/useUser";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Trash2, Plus } from "lucide-react";
-import { randomInt } from "crypto";
 
 const UserPage = () => {
   const { users, loading, addUser, deleteUser } = useUsers();

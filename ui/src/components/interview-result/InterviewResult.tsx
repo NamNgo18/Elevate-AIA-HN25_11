@@ -3,34 +3,19 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { CheckCircle2, XCircle, Mail, Phone, Briefcase } from "lucide-react";
+import type {
+  Candidate,
+  InterviewResult,
+} from "@/features/interview-result/InterviewResult.types";
 
 interface InterviewResultProps {
-  interviewee: {
-    name: string;
-    email: string;
-    phone: string;
-    position: string;
-  };
-  overallScore: number;
-  passed: boolean;
-  detailedScores: {
-    technicalSkills: number;
-    problemSolving: number;
-    communicationSkill: number;
-    practicalExperience: number;
-    enthusiasmAttitude: number;
-  };
-  strengths: string[];
-  weaknesses: string[];
+  candidate: Candidate;
+  interviewResult: InterviewResult;
 }
 
 export function InterviewResult({
-  interviewee,
-  overallScore,
-  passed,
-  detailedScores,
-  strengths,
-  weaknesses,
+  candidate,
+  interviewResult,
 }: InterviewResultProps) {
   return (
     <div className="mx-auto w-full max-w-4xl space-y-6 p-6">
@@ -42,7 +27,7 @@ export function InterviewResult({
             <p className="text-gray-600">Assessment Report</p>
           </div>
           <div className="flex items-center gap-3">
-            {passed ? (
+            {interviewResult.passed ? (
               <>
                 <CheckCircle2 className="h-12 w-12 text-green-600" />
                 <Badge className="bg-green-600 px-4 py-2 text-lg text-white hover:bg-green-700">
@@ -62,33 +47,33 @@ export function InterviewResult({
 
         <Separator className="mb-6" />
 
-        {/* Interviewee Information */}
+        {/* Candidate Information */}
         <div className="space-y-4">
           <h2 className="text-gray-900">Candidate Information</h2>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <p className="mb-1 text-gray-600">Name</p>
-              <p className="text-gray-900">{interviewee.name}</p>
+              <p className="text-gray-900">{candidate.name}</p>
             </div>
             <div className="flex items-center gap-2">
               <Briefcase className="h-4 w-4 text-gray-500" />
               <div>
                 <p className="mb-1 text-gray-600">Position</p>
-                <p className="text-gray-900">{interviewee.position}</p>
+                <p className="text-gray-900">{candidate.target_position}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <Mail className="h-4 w-4 text-gray-500" />
               <div>
                 <p className="mb-1 text-gray-600">Email</p>
-                <p className="text-gray-900">{interviewee.email}</p>
+                <p className="text-gray-900">{candidate.email_address}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <Phone className="h-4 w-4 text-gray-500" />
               <div>
                 <p className="mb-1 text-gray-600">Phone</p>
-                <p className="text-gray-900">{interviewee.phone}</p>
+                <p className="text-gray-900">{candidate.email_address}</p>
               </div>
             </div>
           </div>
@@ -102,14 +87,14 @@ export function InterviewResult({
           <div className="mb-4 flex items-center justify-center gap-4">
             <div
               className={`text-6xl ${
-                passed ? "text-green-600" : "text-red-600"
+                interviewResult.passed ? "text-green-600" : "text-red-600"
               }`}
             >
-              {overallScore}
+              {interviewResult.overall_score}
             </div>
             <div className="text-gray-500">/100</div>
           </div>
-          <Progress value={overallScore} className="h-3" />
+          <Progress value={interviewResult.overall_score} className="h-3" />
         </div>
       </Card>
 
@@ -119,23 +104,19 @@ export function InterviewResult({
         <div className="space-y-6">
           <ScoreItem
             label="Technical Skills"
-            score={detailedScores.technicalSkills}
+            score={interviewResult.technical_skill}
           />
           <ScoreItem
             label="Problem Solving"
-            score={detailedScores.problemSolving}
+            score={interviewResult.problem_solving}
           />
           <ScoreItem
             label="Communication Skills"
-            score={detailedScores.communicationSkill}
+            score={interviewResult.communication}
           />
           <ScoreItem
             label="Practical Experience"
-            score={detailedScores.practicalExperience}
-          />
-          <ScoreItem
-            label="Enthusiasm & Working Attitude"
-            score={detailedScores.enthusiasmAttitude}
+            score={interviewResult.experience}
           />
         </div>
       </Card>
@@ -145,7 +126,7 @@ export function InterviewResult({
         <Card className="p-6">
           <h3 className="mb-4 text-green-700">Strengths</h3>
           <ul className="space-y-3">
-            {strengths.map((strength, index) => (
+            {interviewResult.pros.map((strength, index) => (
               <li key={index} className="flex items-start gap-2">
                 <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-600" />
                 <span className="text-gray-700">{strength}</span>
@@ -157,7 +138,7 @@ export function InterviewResult({
         <Card className="p-6">
           <h3 className="mb-4 text-red-700">Areas for Improvement</h3>
           <ul className="space-y-3">
-            {weaknesses.map((weakness, index) => (
+            {interviewResult.cons.map((weakness, index) => (
               <li key={index} className="flex items-start gap-2">
                 <XCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
                 <span className="text-gray-700">{weakness}</span>
