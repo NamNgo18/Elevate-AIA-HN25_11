@@ -2,7 +2,14 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle2, XCircle, Mail, Phone, Briefcase } from "lucide-react";
+import {
+  CheckCircle2,
+  XCircle,
+  Mail,
+  Phone,
+  Briefcase,
+  User,
+} from "lucide-react";
 import type {
   Candidate,
   InterviewResult,
@@ -18,69 +25,8 @@ export function InterviewResult({
   interviewResult,
 }: InterviewResultProps) {
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-6 p-6">
-      {/* Header with Pass/Fail Indicator */}
-      <Card className="p-6">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="mb-2">Interview Result</h1>
-            <p className="text-gray-600">Assessment Report</p>
-          </div>
-          <div className="flex items-center gap-3">
-            {interviewResult.passed ? (
-              <>
-                <CheckCircle2 className="h-12 w-12 text-green-600" />
-                <Badge className="bg-green-600 px-4 py-2 text-lg text-white hover:bg-green-700">
-                  PASSED
-                </Badge>
-              </>
-            ) : (
-              <>
-                <XCircle className="h-12 w-12 text-red-600" />
-                <Badge className="bg-red-600 px-4 py-2 text-lg text-white hover:bg-red-700">
-                  FAILED
-                </Badge>
-              </>
-            )}
-          </div>
-        </div>
-
-        <Separator className="mb-6" />
-
-        {/* Candidate Information */}
-        <div className="space-y-4">
-          <h2 className="text-gray-900">Candidate Information</h2>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div>
-              <p className="mb-1 text-gray-600">Name</p>
-              <p className="text-gray-900">{candidate.name}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Briefcase className="h-4 w-4 text-gray-500" />
-              <div>
-                <p className="mb-1 text-gray-600">Position</p>
-                <p className="text-gray-900">{candidate.target_position}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Mail className="h-4 w-4 text-gray-500" />
-              <div>
-                <p className="mb-1 text-gray-600">Email</p>
-                <p className="text-gray-900">{candidate.email_address}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Phone className="h-4 w-4 text-gray-500" />
-              <div>
-                <p className="mb-1 text-gray-600">Phone</p>
-                <p className="text-gray-900">{candidate.email_address}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      {/* Overall Score */}
+    <div className="mx-auto w-full space-y-6 p-6">
+      {/* FULL-WIDTH OVERALL SCORE */}
       <Card className="p-6">
         <div className="text-center">
           <h2 className="mb-4">Overall Interview Score</h2>
@@ -98,38 +44,115 @@ export function InterviewResult({
         </div>
       </Card>
 
-      {/* Detailed Scores */}
-      <Card className="p-6">
-        <h2 className="mb-6">Detailed Assessment</h2>
-        <div className="space-y-6">
-          <ScoreItem
-            label="Technical Skills"
-            score={interviewResult.technical_skill}
-          />
-          <ScoreItem
-            label="Problem Solving"
-            score={interviewResult.problem_solving}
-          />
-          <ScoreItem
-            label="Communication Skills"
-            score={interviewResult.communication}
-          />
-          <ScoreItem
-            label="Practical Experience"
-            score={interviewResult.experience}
-          />
-        </div>
-      </Card>
+      {/* Two-column layout */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        {/* LEFT SIDE */}
+        <div className="h-full space-y-6">
+          <Card className="flex h-full flex-col justify-between p-6">
+            {/* Header with Pass/Fail */}
+            <div>
+              <div className="mb-6 flex items-center justify-between">
+                <div>
+                  <h1 className="mb-2">Interview Result</h1>
+                  <p className="text-gray-600">Assessment Report</p>
+                </div>
 
-      {/* Strengths and Weaknesses */}
+                <div className="flex items-center gap-3">
+                  {interviewResult.passed ? (
+                    <>
+                      <CheckCircle2 className="h-12 w-12 text-green-600" />
+                      <Badge className="bg-green-600 px-4 py-2 text-lg text-white">
+                        PASSED
+                      </Badge>
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="h-12 w-12 text-red-600" />
+                      <Badge className="bg-red-600 px-4 py-2 text-lg text-white">
+                        FAILED
+                      </Badge>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <Separator className="mb-6" />
+            </div>
+
+            {/* Candidate Information */}
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="flex items-start gap-2">
+                  <User className="h-4 w-4 text-gray-500" />
+                  <div>
+                    <p className="mb-1 text-gray-600">Name</p>
+                    <p className="text-gray-900">{candidate.name}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2">
+                  <Briefcase className="h-4 w-4 text-gray-500" />
+                  <div>
+                    <p className="mb-1 text-gray-600">Position</p>
+                    <p className="text-gray-900">{candidate.target_position}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2">
+                  <Mail className="h-4 w-4 text-gray-500" />
+                  <div>
+                    <p className="mb-1 text-gray-600">Email</p>
+                    <p className="text-gray-900">{candidate.email_address}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2">
+                  <Phone className="h-4 w-4 text-gray-500" />
+                  <div>
+                    <p className="mb-1 text-gray-600">Phone</p>
+                    <p className="text-gray-900">{candidate.contact_phone}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* RIGHT SIDE — Detailed Scores Only */}
+        <div>
+          <Card className="h-full p-6">
+            <h2 className="mb-6">Detailed Assessment</h2>
+            <div className="space-y-6">
+              <ScoreItem
+                label="Technical Skills"
+                score={interviewResult.technical_skill}
+              />
+              <ScoreItem
+                label="Problem Solving"
+                score={interviewResult.problem_solving}
+              />
+              <ScoreItem
+                label="Communication Skills"
+                score={interviewResult.communication}
+              />
+              <ScoreItem
+                label="Practical Experience"
+                score={interviewResult.experience}
+              />
+            </div>
+          </Card>
+        </div>
+      </div>
+
+      {/* Strengths + Weaknesses */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <Card className="p-6">
           <h3 className="mb-4 text-green-700">Strengths</h3>
           <ul className="space-y-3">
-            {interviewResult.pros.map((strength, index) => (
-              <li key={index} className="flex items-start gap-2">
-                <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-600" />
-                <span className="text-gray-700">{strength}</span>
+            {interviewResult.pros.map((s, i) => (
+              <li key={i} className="flex items-start gap-2">
+                <CheckCircle2 className="mt-0.5 h-5 w-5 text-green-600" />
+                <span className="text-gray-700">{s}</span>
               </li>
             ))}
           </ul>
@@ -138,10 +161,10 @@ export function InterviewResult({
         <Card className="p-6">
           <h3 className="mb-4 text-red-700">Areas for Improvement</h3>
           <ul className="space-y-3">
-            {interviewResult.cons.map((weakness, index) => (
-              <li key={index} className="flex items-start gap-2">
-                <XCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
-                <span className="text-gray-700">{weakness}</span>
+            {interviewResult.cons.map((w, i) => (
+              <li key={i} className="flex items-start gap-2">
+                <XCircle className="mt-0.5 h-5 w-5 text-red-600" />
+                <span className="text-gray-700">{w}</span>
               </li>
             ))}
           </ul>

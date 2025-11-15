@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { InterviewResult } from "@/components/interview-result/InterviewResult";
 import { useInterviewResult } from "@/features/interview-result/useInterviewResult";
 import { CandidateData } from "@/features/interview-result/InterviewResult.types";
@@ -8,36 +8,27 @@ import { CandidateData } from "@/features/interview-result/InterviewResult.types
 function InterviewResultPage() {
   const { interviewReport, loading, generateResult } = useInterviewResult();
 
-  const [candidateData, setCandidateData] = useState<CandidateData | null>(
-    () => {
-      if (typeof window === "undefined") return null;
-      const storedData = sessionStorage.getItem("interviewData");
-      if (!storedData) return null;
-      try {
-        return JSON.parse(storedData);
-      } catch (err) {
-        console.error(
-          "Failed to parse interviewData from sessionStorage:",
-          err,
-        );
-        return null;
-      }
-    },
-  );
-
-  const fetchInterviewResult = useCallback(async () => {
-    if (candidateData && !interviewReport) {
-      try {
-        await generateResult(candidateData);
-      } catch (err) {
-        console.error("Failed to generate interview result:", err);
-      }
+  const [candidateData] = useState<CandidateData | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const stored = sessionStorage.getItem("interviewData");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
     }
-  }, [candidateData, generateResult, interviewReport]);
+  });
+
+  const hasCalledRef = useRef(false);
 
   useEffect(() => {
-    fetchInterviewResult();
-  }, [fetchInterviewResult]);
+    if (!candidateData) return;
+    if (hasCalledRef.current) return;
+
+    hasCalledRef.current = true;
+    generateResult(candidateData).catch((err) =>
+      console.error("Failed to generate interview result:", err),
+    );
+  }, [candidateData, generateResult]);
 
   if (loading) {
     return (
