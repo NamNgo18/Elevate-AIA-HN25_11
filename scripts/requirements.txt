@@ -7,3 +7,6 @@ python-docx
 PyMuPDF
 pytesseract
 python-multipart
+SpeechRecognition
+gTTS
+sounddevice
