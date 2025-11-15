@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useSearchParams } from "next/navigation";
 import { ChatMessage } from "@/components/chat/ChatMessage";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { VideoPreview } from "@/components/chat/VideoPreview";
@@ -30,11 +29,12 @@ export default function App() {
   const [isQuestionActive, setIsQuestionActive] = useState(false);
   const [isInteractionLocked, setIsInteractionLocked] = useState(false);
   const [questionTimerKey, setQuestionTimerKey] = useState(0);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [sessionID, setSessionID] = useState<string>("Unknow Session ID");
-  const resultSearchParams = useSearchParams();
+  const [sessionID, setSessionID] = useState<string>("Unknown Session ID");
+  const [isInterviewCompleted, setIsInterviewCompleted] = useState(false);
+  const [lastUserQuestionIndex, setLastUserQuestionIndex] = useState(0);
 
-  const router = useRouter(); // <-- ADDED
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   // Timer
   useEffect(() => {
@@ -47,36 +47,36 @@ export default function App() {
     return () => clearInterval(interval);
   }, [isInterviewStarted]);
 
-  // Auto-scroll to bottom
+  // Auto-scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Start interview with welcome message
+  // Initialize interview with welcome message
   useEffect(() => {
-    const initialize_interview = async () => {
+    const initializeInterview = async () => {
       setIsInteractionLocked(true);
       handleAddMessage(
         "ai",
-        `🎯 Interview Practice Guidelines\n\nWelcome! Please review these instructions to help you perform successfully in your interview.\n\n🧩 1. Interview Format\n\nThe interview will include a few main questions.\nSome questions may include follow-up (sub) questions to clarify your answers or gather more details.\n\n💬 2. How to Answer\n\nYou have two options for answering:\n✏️ Type your answer in the input box.\n🎤 Speak your answer by clicking the microphone icon.\n\n🌟 3. Tips for a Successful Interview\n\n🌬️ Take a deep breath before you begin.\n🤫 Stay in a quiet, distraction-free space.\n👂 Listen carefully to each question.\n🗣️ Answer clearly and confidently — be concise and natural.\n💡 If you don’t understand a question, it’s okay to ask for clarification.`,
+        `🎯 Interview Practice Guidelines\n\nWelcome! Please review these instructions to help you perform successfully in your interview.\n\n🧩 1. Interview Format\n\nThe interview will include a few main questions.\nSome questions may include follow-up (sub) questions to clarify your answers or gather more details.\n\n💬 2. How to Answer\n\nYou have two options for answering:\n✏️ Type your answer in the input box.\n🎤 Speak your answer by clicking the microphone icon.\n\n🌟 3. Tips for a Successful Interview\n\n🌬️ Take a deep breath before you begin.\n🤫 Stay in a quiet, distraction-free space.\n👂 Listen carefully to each question.\n🗣️ Answer clearly and confidently — be concise and natural.\n💡 If you don’t understand a question, it’s okay to ask for clarification.`
       );
+
       try {
         const resp = await apiClient.post("/routes/qna/start", {
           jd_id: "JD-001",
           cv_id: "CV-001",
         });
 
-        console.log("AI response user's question:", resp);
         setSessionID(resp.data.session_id);
         console.log(resp.data.reply);
         setIsInteractionLocked(false);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error calling backend:", error);
-        alert("ERROR: " + error.response.data.error);
+        alert("ERROR: " + (error.response?.data?.error || error.message));
       }
     };
 
-    initialize_interview();
+    initializeInterview();
   }, []);
 
   const formatTime = (totalSeconds: number) => {
@@ -85,13 +85,9 @@ export default function App() {
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const handleAddMessage = (
-    sender: "ai" | "user",
-    params: string | string[],
-  ) => {
-    const reply_text: string[] = Array.isArray(params) ? params : [params];
-    console.log("AI replied: " + reply_text);
-    const newMsg: Message[] = reply_text.map((text) => ({
+  const handleAddMessage = (sender: "ai" | "user", params: string | string[]) => {
+    const replyText: string[] = Array.isArray(params) ? params : [params];
+    const newMsg: Message[] = replyText.map((text) => ({
       id: crypto.randomUUID(),
       role: sender,
       content: text,
@@ -104,26 +100,44 @@ export default function App() {
   };
 
   const handleSendMessage = async (sender: string, content: string) => {
-    if (!isInterviewStarted) {
-      setIsInterviewStarted(true);
-    }
+    if (!isInterviewStarted) setIsInterviewStarted(true);
+
+    // Track this as the user's latest question
+    setLastUserQuestionIndex(currentQuestionIndex + 1);
 
     setIsInteractionLocked(true);
-    handleAddMessage(sender == "user" ? "user" : "ai", content);
+    handleAddMessage(sender === "user" ? "user" : "ai", content);
 
     try {
       const resp = await apiClient.post("/routes/qna/answer", {
         session_id: sessionID,
         answer: content,
       });
-      console.log("AI response user's question:", resp);
+
+      // Add AI reply
       handleAddMessage(resp.data.role, resp.data.reply);
+
+      // Update question index and total
       setCurrentQuestionIndex(resp.data.question.current_idx);
       setTotalQuestion(resp.data.question.total);
+
+      // ✅ Only trigger completion after AI responds to last user question
+      if (
+        resp.data.question.current_idx >= resp.data.question.total &&
+        lastUserQuestionIndex >= resp.data.question.total
+      ) {
+        // Fixed congratulatory message
+        handleAddMessage(
+          "ai",
+          "🎉 Congratulations on finishing the interview! Click the View Result button to see your result."
+        );
+        setIsInterviewCompleted(true);
+      }
+
       setIsInteractionLocked(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error calling backend:", error);
-      alert("ERROR: " + error.response.data.error);
+      alert("ERROR: " + (error.response?.data?.error || error.message));
     }
 
     setIsQuestionActive(false);
@@ -142,16 +156,15 @@ export default function App() {
         answer: "Generate no more than 1 in total",
       });
 
-      console.log("AI start response:", resp);
       setMessages([]); // reset conversation
       handleAddMessage(resp.data.role, resp.data.reply);
       setCurrentQuestionIndex(resp.data.question.current_idx);
       setTotalQuestion(resp.data.question.total);
       setIsInterviewStarted(true);
       setIsInteractionLocked(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error calling backend:", error);
-      alert("ERROR: " + error.response.data.error);
+      alert("ERROR: " + (error.response?.data?.error || error.message));
     }
   };
 
@@ -174,8 +187,7 @@ export default function App() {
 
           <div className="flex items-center gap-4">
             <Badge variant="secondary" className="px-3 py-1.5">
-              Question {Math.min(currentQuestionIndex, totalQuestion)} /{" "}
-              {totalQuestion}
+              Question {Math.min(currentQuestionIndex, totalQuestion)} / {totalQuestion}
             </Badge>
             <div className="bg-accent/50 flex items-center gap-2 rounded-lg px-4 py-2">
               <Clock className="text-accent-foreground h-4 w-4" />
@@ -206,7 +218,9 @@ export default function App() {
                 key={questionTimerKey}
                 isActive={isQuestionActive}
                 onTimeUp={() =>
-                  toast.warning("Time's up! But feel free to continue with your answer.")
+                  toast.warning(
+                    "Time's up! But feel free to continue with your answer."
+                  )
                 }
               />
             </div>
@@ -227,13 +241,15 @@ export default function App() {
             </div>
           )}
 
-          {/* ✅ NEW — View Result Button */}
-          {currentQuestionIndex >= totalQuestion && totalQuestion > 0 && (
+          {/* ✅ View Result Button */}
+          {isInterviewCompleted && (
             <div className="mt-6 flex justify-center">
               <Button
                 size="lg"
                 className="rounded-full px-8"
-                onClick={() => router.push(`/interview-results?session_id=${sessionID}`)}
+                onClick={() =>
+                  router.push(`/interview-results?session_id=${sessionID}`)
+                }
               >
                 View Result
               </Button>
