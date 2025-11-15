@@ -3,7 +3,6 @@ from fastapi.middleware.cors  import  CORSMiddleware
 
 from dotenv                     import  load_dotenv
 from app.utilities.log_manager  import  LoggingManager
-from typing import List, Dict, Any 
 
 # ========================================
 #           setup config

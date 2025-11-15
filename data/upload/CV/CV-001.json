@@ -1,8 +1,9 @@
 {
   "basics": {
+    "cv_id": "CV-001",
     "name": "Hoàng Văn E",
     "label": "IT Project Manager (Scrum Master)",
-    "email": "hoangvane@email.com",
+    "email": "nguyenanhtuan117th@gmail.com",
     "phone_number": "0973813254",
     "summary": "Quản lý dự án IT chuyên nghiệp với 7 năm kinh nghiệm dẫn dắt các dự án phát triển phần mềm Agile/Scrum. Chuyên quản lý rủi ro và giao tiếp với các bên liên quan.",
     "location": {

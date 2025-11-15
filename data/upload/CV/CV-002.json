@@ -1,8 +1,9 @@
 {
   "basics": {
+    "cv_id": "CV-002",
     "name": "Lê Quốc V",
     "label": "Data Engineer",
-    "email": "quocv.data@email.com",
+    "email": "ntuanna95.hr@gmail.com",
     "phone_number": "0973813123",
     "summary": "Kỹ sư dữ liệu với 8 năm kinh nghiệm thiết kế hệ thống Big Data, ETL và phân tích dữ liệu cho doanh nghiệp.",
     "location": {
