@@ -372,6 +372,11 @@ Instructions:
 
 # =======================================
 def handle_build_interview_summary(session_id: str = None) -> dict:
+    qna_session_mgr = SessionManager().get_session(session_id)
+    if not qna_session_mgr:
+        app_logger.error(f"Session ID {session_id} not found.")
+        return None
+
     resume: dict = {
         "candidate": {
             "name": None,
@@ -382,7 +387,6 @@ def handle_build_interview_summary(session_id: str = None) -> dict:
         "conversation_history": []
     }
     app_logger = LoggingManager().get_logger("AppLogger")
-    qna_session_mgr = SessionManager().get_session(session_id)
     resume["candidate"]["name"] = qna_session_mgr["cv_meta"].get("basics", {}).get("name", "Unknown")
     resume["candidate"]["target_position"] = qna_session_mgr["jd_meta"].get("basic_info", {}).get("job_title", "Job title not available")
     resume["candidate"]["contact_phone"] = qna_session_mgr["cv_meta"].get("basics", {}).get("phone", "Unknown")
