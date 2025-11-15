@@ -217,7 +217,7 @@ export default function App() {
       alert("Please select at least one Job Description to practice.");
       return;
     }
-    router.push(`/chat?jd_id=${selectedIds[0]}`);
+    router.push(`/chat?jd_id=${selectedIds[0]}&cv_id=`); // CV ID can be appended later
   };
 
   return (
