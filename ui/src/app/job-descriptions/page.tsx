@@ -25,6 +25,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useRouter } from "next/navigation";
 
 interface JobDescription {
   id: string;
@@ -40,6 +41,7 @@ export default function App() {
   const [selectedJD, setSelectedJD] = useState<JobDescription | null>(null);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [rowSelection, setRowSelection] = useState({});
+  const router = useRouter();
 
   const columns: ColumnDef<JobDescription, any>[] = [
     {
@@ -215,12 +217,7 @@ export default function App() {
       alert("Please select at least one Job Description to practice.");
       return;
     }
-
-    alert(
-      `Starting interview practice for ${selectedIds.length} JD(s): ${selectedIds.join(
-        ", ",
-      )}`,
-    );
+    router.push(`/chat?jd_id=${selectedIds[0]}`);
   };
 
   return (
