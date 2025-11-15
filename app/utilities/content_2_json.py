@@ -62,7 +62,7 @@ def parse_content_to_json(
         "type": "function",
         "function": {
             "name": "parse_content",
-            "description": "Parses the raw text (e.g., CV or Job Description) into a structured JSON object according to the required schema.",
+            "description": "Parses the raw text (e.g., CV or Job Description) into a structured JSON object according to the required schema. In case you can not match value to any field in a schema, return it null instead. DO NOT MISS ANY FIELD FROM THE SCHEMA",
             "parameters": parameters_schema
         }
     }

@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, Clock } from "lucide-react";
 import { toast } from "sonner";
 import apiClient from "@/lib/api-client";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface Message {
   id: string;
@@ -30,6 +30,7 @@ export default function App() {
   const [isInteractionLocked, setIsInteractionLocked] = useState(false);
   const [questionTimerKey, setQuestionTimerKey] = useState(0);
   const [sessionID, setSessionID] = useState<string>("Unknown Session ID");
+  const resultSearchParams = useSearchParams();
   const [isInterviewCompleted, setIsInterviewCompleted] = useState(false);
   const [lastUserQuestionIndex, setLastUserQuestionIndex] = useState(0);
 
@@ -63,19 +64,35 @@ export default function App() {
 
       try {
         const resp = await apiClient.post("/routes/qna/start", {
-          jd_id: "JD-001",
-          cv_id: "CV-001",
+          jd_id: jdIDParser,
+          cv_id: cvIdParser,
         });
-
+        console.log("AI response user's question:", resp);
         setSessionID(resp.data.session_id);
         console.log(resp.data.reply);
         setIsInteractionLocked(false);
-      } catch (error: any) {
+      } catch (error) {
         console.error("Error calling backend:", error);
         alert("ERROR: " + (error.response?.data?.error || error.message));
       }
     };
 
+    const jdIDParser = resultSearchParams.get("jd_id");
+    const cvIdParser = resultSearchParams.get("cv_id");
+    if (!jdIDParser) {
+      const err_msg: string =
+        "Perhaps the job description ID or CV ID was not provided!";
+      console.log(
+        err_msg + "\nJD ID : " + jdIDParser + "\nCV ID : " + cvIdParser,
+      );
+      handleAddMessage(
+        "ai",
+        err_msg + "\nJD ID : " + jdIDParser + "\nCV ID : " + cvIdParser,
+      );
+      alert(err_msg);
+      return;
+    }
+    // Call the async function
     initializeInterview();
   }, []);
 
@@ -153,10 +170,10 @@ export default function App() {
     try {
       const resp = await apiClient.post("/routes/qna/answer", {
         session_id: sessionID,
-        answer: "Generate no more than 1 in total",
+        answer: "Generate no more than 3 in total",
       });
-
-      setMessages([]); // reset conversation
+      console.log("AI start response:", resp);
+      setMessages([]); // The conversation should empty after starting
       handleAddMessage(resp.data.role, resp.data.reply);
       setCurrentQuestionIndex(resp.data.question.current_idx);
       setTotalQuestion(resp.data.question.total);

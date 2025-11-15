@@ -1,51 +1,106 @@
 # Schema for parsing a CV (Unchanged)
 CV_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "metadata": {
-            "description": "Thông tin về file CV gốc và thời gian quét (Model sẽ để null nếu không có trong text)",
-            "type": "object",
-            "properties": {
-                "cv_id": {"type": ["string", "null"], "format": "uuid"},
-                "source_file_name": {"type": ["string", "null"]},
-                "uploaded_by": {"type": ["string", "null"]},
-                "scanned_at": {"type": ["string", "null"], "format": "date-time"}
-            }
+  "type": "object",
+  "properties": {
+      "metadata": {
+          "description": "Thông tin về file CV gốc và thời gian quét (Model sẽ để null nếu không có trong text)",
+          "type": "object",
+          "properties": {
+              "cv_id": {"type": ["string", "null"], "format": "uuid"},
+              "source_file_name": {"type": ["string", "null"]},
+              "uploaded_by": {"type": ["string", "null"]},
+              "scanned_at": {"type": ["string", "null"], "format": "date-time"}
+          }
+      },
+      "basics": {
+      "type": "object",
+      "properties": {
+        "cv_id": { "type": "string" },
+        "name": { "type": "string" },
+        "label": {
+          "type": "string",
+          "description": "e.g., 'DevOps Engineer'"
         },
-        "basics": {
-            "type": "object",
-            "properties": {
-                "name": {"type": "string"},
-                "label": {"type": "string", "description": "e.g., 'Software Engineer'"},
-                "email": {"type": "string"},
-                "summary": {"type": "string"},
-            }
-        },
-        "work": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "name": {"type": "string", "description": "Company name"},
-                    "position": {"type": "string"},
-                    "startDate": {"type": "string", "description": "Format YYYY-MM-DD"},
-                    "highlights": {"type": "array", "items": {"type": "string"}}
-                }
-            }
-        },
-        "education": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "institution": {"type": "string"},
-                    "area": {"type": "string", "description": "Field of study"},
-                    "studyType": {"type": "string", "description": "e.g., 'Bachelor'"}
-                }
-            }
+        "email": { "type": "string", "format": "email" },
+        "phone_number": { "type": "string" },
+        "summary": { "type": "string" },
+        "location": {
+          "type": "object",
+          "properties": {
+            "city": { "type": "string" },
+            "countryCode": { "type": "string" }
+          },
+          "required": ["city", "countryCode"]
         }
+      },
+      "required": [
+        "cv_id",
+        "name",
+        "label",
+        "email",
+        "phone_number",
+        "summary",
+        "location"
+      ]
     },
-    "required": ["basics", "work"]
+    "work": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "description": "Company name" },
+          "position": { "type": "string" },
+          "startDate": { "type": "string", "format": "date" },
+          "endDate": { "type": "string", "format": "date" },
+          "highlights": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "required": ["name", "position", "startDate", "endDate", "highlights"]
+      }
+    },
+    "education": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "institution": { "type": "string" },
+          "area": { "type": "string", "description": "Field of study" },
+          "studyType": { "type": "string", "description": "e.g., 'Đại học'" }
+        },
+        "required": ["institution", "area", "studyType"]
+      }
+    },
+    "skills": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "level": { "type": "string", "description": "e.g., 'Advanced'" },
+          "keywords": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "required": ["name", "keywords"]
+      }
+    },
+    "awards": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string" },
+          "date": { "type": "string", "format": "date" },
+          "awarder": { "type": "string" }
+        },
+        "required": ["title", "date", "awarder"]
+      }
+    }
+  },
+  "required": ["basics", "work", "education", "skills", "awards"]
 }
 
 # Schema for parsing a Job Description (JD)
