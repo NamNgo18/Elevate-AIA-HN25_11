@@ -13,9 +13,12 @@ def handle_initialize_interview(jd_id: str = None, cv_id:str = None) -> dict:
         full_path: str = Path(__file__).resolve().parents[2]/"data"/"upload"/"JD"/f"{jd_id}.json"
         with open(full_path, 'r') as jd_file:
             jd_info = json.load(jd_file)
-        full_path: str = Path(__file__).resolve().parents[2]/"data"/"upload"/"CV"/f"{cv_id}.json"
-        with open(full_path, 'r') as cv_file:
-            cv_info = json.load(cv_file)
+        if cv_id:
+            full_path: str = Path(__file__).resolve().parents[2] / "data" / "upload" / "CV" / f"{cv_id}.json"
+            with open(full_path, 'r') as cv_file:
+                cv_info = json.load(cv_file)
+        else:
+            cv_info = None
     except FileNotFoundError as e:
         app_logger.error(f"The file {e.filename} was not found.")
         return None
@@ -68,7 +71,7 @@ Response structure:
     # QnA session instance
     new_ssid: str = SessionManager().create_session(**params)
     app_logger.info(jd_info)
-    app_logger.info(cv_info)
+    # app_logger.info(cv_info)
     return {"session_id": new_ssid}
 
 # =======================================

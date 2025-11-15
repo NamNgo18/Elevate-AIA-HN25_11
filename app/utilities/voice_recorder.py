@@ -39,7 +39,7 @@ class VoiceRecorder:
             self.recording = True
             self.stream = sd.InputStream(
                 samplerate = self.sample_rate,
-                channels   = 2,
+                channels   = 1,
                 callback   = self._callback
             )
             self.stream.start()

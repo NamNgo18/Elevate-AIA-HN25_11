@@ -58,25 +58,34 @@ export default function App() {
         `🎯 Interview Practice Guidelines\n\nWelcome! Please review these instructions to help you perform successfully in your interview.\n\n🧩 1. Interview Format\n\nThe interview will include a few main questions.\nSome questions may include follow-up (sub) questions to clarify your answers or gather more details.\n\n💬 2. How to Answer\n\nYou have two options for answering:\n✏️ Type your answer in the input box.\n🎤 Speak your answer by clicking the microphone icon.\n\n🌟 3. Tips for a Successful Interview\n\n🌬️ Take a deep breath before you begin.\n🤫 Stay in a quiet, distraction-free space.\n👂 Listen carefully to each question.\n🗣️ Answer clearly and confidently — be concise and natural.\n💡 If you don’t understand a question, it’s okay to ask for clarification.`,
       );
       try {
-        const resp = await apiClient.post("/routes/qna/start", {jd_id: jdIDParser, cv_id: cvIdParser});
-        console.log("AI response user's question:", resp)
-        setSessionID(resp.data.session_id)
-        console.log(resp.data.reply)
-        setIsInteractionLocked(false)
+        const resp = await apiClient.post("/routes/qna/start", {
+          jd_id: jdIDParser,
+          cv_id: cvIdParser,
+        });
+        console.log("AI response user's question:", resp);
+        setSessionID(resp.data.session_id);
+        console.log(resp.data.reply);
+        setIsInteractionLocked(false);
       } catch (error) {
         console.error("Error calling backend:", error);
         alert("ERROR: " + error.response.data.error);
       }
     };
 
-    const jdIDParser = resultSearchParams.get("jd_id")
-    const cvIdParser = resultSearchParams.get("cv_id")
-    if (!jdIDParser || !cvIdParser) {
-      const err_msg: string = "Perhaps the job description ID or CV ID was not provided!"
-      console.log(err_msg + "\nJD ID : " + jdIDParser + "\nCV ID : " + cvIdParser)
-      handleAddMessage("ai", err_msg + "\nJD ID : " + jdIDParser + "\nCV ID : " + cvIdParser)
-      alert(err_msg)
-      return
+    const jdIDParser = resultSearchParams.get("jd_id");
+    const cvIdParser = resultSearchParams.get("cv_id");
+    if (!jdIDParser) {
+      const err_msg: string =
+        "Perhaps the job description ID or CV ID was not provided!";
+      console.log(
+        err_msg + "\nJD ID : " + jdIDParser + "\nCV ID : " + cvIdParser,
+      );
+      handleAddMessage(
+        "ai",
+        err_msg + "\nJD ID : " + jdIDParser + "\nCV ID : " + cvIdParser,
+      );
+      alert(err_msg);
+      return;
     }
     // Call the async function
     initialize_interview();
@@ -172,7 +181,10 @@ export default function App() {
   const handleStartInterview = async () => {
     setIsInteractionLocked(true);
     try {
-      const resp = await apiClient.post("/routes/qna/answer", {session_id: sessionID, answer: "Generate no more than 3 in total"});
+      const resp = await apiClient.post("/routes/qna/answer", {
+        session_id: sessionID,
+        answer: "Generate no more than 3 in total",
+      });
       console.log("AI start response:", resp);
       setMessages([]); // The conversation should empty after starting
       handleAddMessage(resp.data.role, resp.data.reply);
