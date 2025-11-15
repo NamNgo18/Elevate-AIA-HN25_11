@@ -26,8 +26,8 @@ export function ChatMessage({ role, content, timestamp }: ChatMessageProps) {
         <div
           className={`rounded-2xl px-4 py-3 shadow-sm ${
             isAI
-              ? "border-border rounded-tl-sm border bg-white"
-              : "bg-primary text-primary-foreground rounded-tr-sm"
+              ? "bg-secondary text-secondary-foreground border border-border"
+              : "bg-primary text-primary-foreground"
           }`}
         >
           <p className="break-words whitespace-pre-wrap">{content}</p>
