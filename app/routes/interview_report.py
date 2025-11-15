@@ -4,11 +4,10 @@ from app.services.report_generator import ReportGenerator
 router = APIRouter()
 service = ReportGenerator()
 
-@router.post(path="", summary="Generate interview report from interview JSON")
-async def report_interview(interview: dict):
-    """Endpoint to report an interview result JSON."""
+@router.get(path="")
+async def report_interview(session_id: str):
     try:
-        result = service.report_interview(interview)
+        result = service.report_interview(session_id)
         if "error" in result:
             raise HTTPException(status_code=500, detail=result["error"])
         return result

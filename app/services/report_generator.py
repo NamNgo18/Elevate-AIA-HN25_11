@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime
 
 from app.utilities.openAI_helper import OpenAIHelper
-
+from app.services.qna_generator import handle_build_interview_summary
 
 class ReportGenerator:
     def __init__(self):
@@ -97,8 +97,14 @@ Respond strictly as JSON with this structure:
         except json.JSONDecodeError:
             return None
 
-    def report_interview(self, interview_json: dict) -> dict:
-        """Generate interview evaluation summary."""
+    def report_interview(self, session_id: str) -> dict:
+        # Get the raw interview JSON
+        interview_json = handle_build_interview_summary(session_id)
+
+        # Extract candidate info
+        candidate_info = interview_json.get("candidate", {})
+
+        # Generate prompt for OpenAI
         prompt = self._build_prompt(interview_json)
 
         response = self.openai.make_request(
@@ -109,10 +115,7 @@ Respond strictly as JSON with this structure:
 
         parsed = self._parse_json_response(response)
 
-        # ----------------------------
-        # If first attempt fails, retry without the model doing function calls
-        # ----------------------------
-
+        # Retry if first attempt returned invalid JSON or function calls
         if not parsed and response.get("func"):
             fallback_prompt = (
                 "The previous response incorrectly returned function calls. "
@@ -128,20 +131,26 @@ Respond strictly as JSON with this structure:
 
             parsed = self._parse_json_response(fallback_resp)
 
-        # ----------------------------
-        # If still no valid JSON → return raw response
-        # ----------------------------
+        # If still invalid, return error
         if not parsed:
-            return {"error": "Failed to parse JSON from model response.", "raw": response}
+            return {
+                "error": "Failed to parse JSON from model response.",
+                "raw": response,
+                "candidate": candidate_info
+            }
 
-        # ----------------------------
-        # Save internally (safe, does not affect output)
-        # ----------------------------
-
+        # Save report internally
         try:
-            candidate_name, position = self._extract_candidate_info(interview_json)
+            candidate_name = candidate_info.get("name", "report")
+            position = candidate_info.get("target_position", "")
             self._save_report(candidate_name, position, parsed)
         except Exception:
             pass
 
-        return parsed
+        # Merge candidate info with evaluation summary
+        final_output = {
+            "candidate": candidate_info,
+            "interview_summary": parsed
+        }
+
+        return final_output

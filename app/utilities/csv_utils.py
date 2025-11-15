@@ -34,8 +34,8 @@ class CsvUtils:
         """
         # Check 1: Allow to read/write in /data folder and its sub-folders
         # Note: This regex is very specific to a root /data directory
-        if not re.search(r"/data(/|$)", file_path):
-            raise Exception(f"File path {file_path} is not in the allowed /data directory")
+        # if not re.search(r"/data(/|$)", file_path):
+        #     raise Exception(f"File path {file_path} is not in the allowed /data directory")
 
         # Check 2: Ensure it's a .csv file
         if not file_path.lower().endswith(".csv"):

@@ -4,31 +4,25 @@ import { useEffect, useState, useRef } from "react";
 import { InterviewResult } from "@/components/interview-result/InterviewResult";
 import { useInterviewResult } from "@/features/interview-result/useInterviewResult";
 import { CandidateData } from "@/features/interview-result/InterviewResult.types";
+import { useSearchParams } from "next/navigation";
 
 function InterviewResultPage() {
   const { interviewReport, loading, generateResult } = useInterviewResult();
 
-  const [candidateData] = useState<CandidateData | null>(() => {
-    if (typeof window === "undefined") return null;
-    try {
-      const stored = sessionStorage.getItem("interviewData");
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      return null;
-    }
-  });
+  const searchParams = useSearchParams();
+  const sessionId = searchParams.get("session_id");
 
   const hasCalledRef = useRef(false);
 
   useEffect(() => {
-    if (!candidateData) return;
+    if (!sessionId) return;
     if (hasCalledRef.current) return;
 
     hasCalledRef.current = true;
-    generateResult(candidateData).catch((err) =>
+    generateResult(sessionId).catch((err) =>
       console.error("Failed to generate interview result:", err),
     );
-  }, [candidateData, generateResult]);
+  }, [sessionId, generateResult]);
 
   if (loading) {
     return (
@@ -38,7 +32,7 @@ function InterviewResultPage() {
     );
   }
 
-  if (!interviewReport || !candidateData) {
+  if (!interviewReport || !sessionId) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50 py-8">
         <p className="text-gray-600">No interview data available</p>
@@ -49,8 +43,8 @@ function InterviewResultPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <InterviewResult
-        candidate={candidateData.candidate}
-        interviewResult={interviewReport}
+        candidate={interviewReport.candidate}
+        interviewSummary={interviewReport.interview_summary}
       />
     </div>
   );
