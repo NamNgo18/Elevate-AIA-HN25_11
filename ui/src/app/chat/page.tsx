@@ -35,6 +35,7 @@ export default function App() {
   const [lastUserQuestionIndex, setLastUserQuestionIndex] = useState(0);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const hasInitializedRef = useRef(false);
   const router = useRouter();
 
   // Timer
@@ -55,11 +56,14 @@ export default function App() {
 
   // Initialize interview with welcome message
   useEffect(() => {
+    if (hasInitializedRef.current) return;
+    hasInitializedRef.current = true;
+
     const initializeInterview = async () => {
       setIsInteractionLocked(true);
       handleAddMessage(
         "ai",
-        `🎯 Interview Practice Guidelines\n\nWelcome! Please review these instructions to help you perform successfully in your interview.\n\n🧩 1. Interview Format\n\nThe interview will include a few main questions.\nSome questions may include follow-up (sub) questions to clarify your answers or gather more details.\n\n💬 2. How to Answer\n\nYou have two options for answering:\n✏️ Type your answer in the input box.\n🎤 Speak your answer by clicking the microphone icon.\n\n🌟 3. Tips for a Successful Interview\n\n🌬️ Take a deep breath before you begin.\n🤫 Stay in a quiet, distraction-free space.\n👂 Listen carefully to each question.\n🗣️ Answer clearly and confidently — be concise and natural.\n💡 If you don’t understand a question, it’s okay to ask for clarification.`
+        `🎯 Interview Practice Guidelines\n\nWelcome! Please review these instructions to help you perform successfully in your interview.\n\n🧩 1. Interview Format\n\nThe interview will include a few main questions.\nSome questions may include follow-up (sub) questions to clarify your answers or gather more details.\n\n💬 2. How to Answer\n\nYou have two options for answering:\n✏️ Type your answer in the input box.\n🎤 Speak your answer by clicking the microphone icon.\n\n🌟 3. Tips for a Successful Interview\n\n🌬️ Take a deep breath before you begin.\n🤫 Stay in a quiet, distraction-free space.\n👂 Listen carefully to each question.\n🗣️ Answer clearly and confidently — be concise and natural.\n💡 If you don’t understand a question, it’s okay to ask for clarification.`,
       );
 
       try {
@@ -102,7 +106,10 @@ export default function App() {
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const handleAddMessage = (sender: "ai" | "user", params: string | string[]) => {
+  const handleAddMessage = (
+    sender: "ai" | "user",
+    params: string | string[],
+  ) => {
     const replyText: string[] = Array.isArray(params) ? params : [params];
     const newMsg: Message[] = replyText.map((text) => ({
       id: crypto.randomUUID(),
@@ -146,7 +153,7 @@ export default function App() {
         // Fixed congratulatory message
         handleAddMessage(
           "ai",
-          "🎉 Congratulations on finishing the interview! Click the View Result button to see your result."
+          "🎉 Congratulations on finishing the interview! Click the View Result button to see your result.",
         );
         setIsInterviewCompleted(true);
       }
@@ -204,7 +211,8 @@ export default function App() {
 
           <div className="flex items-center gap-4">
             <Badge variant="secondary" className="px-3 py-1.5">
-              Question {Math.min(currentQuestionIndex, totalQuestion)} / {totalQuestion}
+              Question {Math.min(currentQuestionIndex, totalQuestion)} /{" "}
+              {totalQuestion}
             </Badge>
             <div className="bg-accent/50 flex items-center gap-2 rounded-lg px-4 py-2">
               <Clock className="text-accent-foreground h-4 w-4" />
@@ -236,7 +244,7 @@ export default function App() {
                 isActive={isQuestionActive}
                 onTimeUp={() =>
                   toast.warning(
-                    "Time's up! But feel free to continue with your answer."
+                    "Time's up! But feel free to continue with your answer.",
                   )
                 }
               />
