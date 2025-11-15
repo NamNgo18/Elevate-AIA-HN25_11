@@ -44,16 +44,6 @@ export default function App() {
   const columns: ColumnDef<JobDescription, any>[] = [
     {
       id: "select",
-      header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      ),
       cell: ({ row }) => (
         <Checkbox
           checked={row.getIsSelected()}
@@ -143,6 +133,7 @@ export default function App() {
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
     onRowSelectionChange: setRowSelection,
+    enableMultiRowSelection: false,
     state: {
       columnFilters,
       rowSelection,
