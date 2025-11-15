@@ -44,7 +44,7 @@ export function UploadJDDialog({
       if (
         file.type === "application/pdf" ||
         file.type ===
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
       ) {
         setUploadedFile(file);
       } else {
@@ -59,7 +59,7 @@ export function UploadJDDialog({
       if (
         file.type === "application/pdf" ||
         file.type ===
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
       ) {
         setUploadedFile(file);
       } else {
@@ -106,11 +106,10 @@ export function UploadJDDialog({
 
         <div className="space-y-6">
           <div
-            className={`relative rounded-lg border-2 border-dashed p-12 text-center transition-colors ${
-              dragActive
-                ? "border-blue-500 bg-blue-50"
-                : "border-gray-300 bg-gray-50"
-            }`}
+            className={`relative rounded-lg border-2 border-dashed p-12 text-center transition-colors ${dragActive
+              ? "border-blue-500 bg-blue-50"
+              : "border-gray-300 bg-gray-50"
+              }`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
             onDragOver={handleDrag}

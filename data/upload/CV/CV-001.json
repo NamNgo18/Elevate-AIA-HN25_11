@@ -1,0 +1,68 @@
+{
+  "basics": {
+    "cv_id": "CV-001",
+    "name": "Hoàng Văn E",
+    "label": "IT Project Manager (Scrum Master)",
+    "email": "nguyenanhtuan117th@gmail.com",
+    "phone_number": "0973813254",
+    "summary": "Quản lý dự án IT chuyên nghiệp với 7 năm kinh nghiệm dẫn dắt các dự án phát triển phần mềm Agile/Scrum. Chuyên quản lý rủi ro và giao tiếp với các bên liên quan.",
+    "location": {
+      "city": "Hà Nội",
+      "countryCode": "VN"
+    }
+  },
+  "work": [
+    {
+      "name": "Consulting Firm Z",
+      "position": "Project Manager/Scrum Master",
+      "startDate": "2018-05-01",
+      "endDate": "2025-10-28",
+      "highlights": [
+        "Quản lý thành công 10+ dự án phát triển phần mềm với ngân sách trung bình 500k USD, đảm bảo 95% dự án hoàn thành đúng thời hạn.",
+        "Thiết lập và duy trì quy trình Agile cho đội ngũ 15 kỹ sư, cải thiện 30% năng suất làm việc (velocity)."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "institution": "Học viện Công nghệ Bưu chính Viễn thông",
+      "area": "Quản lý Dự án",
+      "studyType": "Thạc sĩ"
+    }
+  ],
+  "skills": [
+    {
+      "name": "Phương pháp luận",
+      "level": "Expert",
+      "keywords": [
+        "Scrum",
+        "Agile",
+        "Kanban",
+        "Waterfall"
+      ]
+    },
+    {
+      "name": "Chứng chỉ",
+      "level": "Certified",
+      "keywords": [
+        "PMP",
+        "Certified ScrumMaster (CSM)"
+      ]
+    },
+    {
+      "name": "Công cụ",
+      "keywords": [
+        "Jira",
+        "Trello",
+        "Microsoft Project"
+      ]
+    }
+  ],
+  "awards": [
+    {
+      "title": "PMP Certification",
+      "date": "2019-12-01",
+      "awarder": "PMI"
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "basics": {
+    "cv_id": "CV-002",
+    "name": "Lê Quốc V",
+    "label": "Data Engineer",
+    "email": "ntuanna95.hr@gmail.com",
+    "phone_number": "0973813123",
+    "summary": "Kỹ sư dữ liệu với 8 năm kinh nghiệm thiết kế hệ thống Big Data, ETL và phân tích dữ liệu cho doanh nghiệp.",
+    "location": {
+      "city": "Hà Nội",
+      "countryCode": "VN"
+    }
+  },
+  "work": [
+    {
+      "name": "FinTech C",
+      "position": "Lead Data Engineer",
+      "startDate": "2017-06-01",
+      "endDate": "2025-09-15",
+      "highlights": [
+        "Thiết kế pipeline dữ liệu cho dự án trị giá 2 triệu USD.",
+        "Tối ưu hóa xử lý dữ liệu lớn, giảm chi phí vận hành 25%."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "institution": "Đại học Quốc gia Hà Nội",
+      "area": "Khoa học Máy tính",
+      "studyType": "Thạc sĩ"
+    }
+  ],
+  "skills": [
+    {
+      "name": "Data Engineering",
+      "level": "Expert",
+      "keywords": [
+        "Spark",
+        "Hadoop",
+        "Python",
+        "SQL"
+      ]
+    },
+    {
+      "name": "ETL Tools",
+      "keywords": [
+        "Airflow",
+        "Talend"
+      ]
+    }
+  ],
+  "awards": [
+    {
+      "title": "Data Hero",
+      "date": "2020-03-15",
+      "awarder": "FinTech C"
+    }
+  ]
+}

@@ -332,7 +332,7 @@ export default function App() {
       <FindCandidateDialog
         open={candidateDialogOpen}
         onOpenChange={setCandidateDialogOpen}
-        jobDescription={selectedJD}
+        jobDescription={selectedJD ? { jd_id: selectedJD.id } : null}
       />
     </div>
   );
