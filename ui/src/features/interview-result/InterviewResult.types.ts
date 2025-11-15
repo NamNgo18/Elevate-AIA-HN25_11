@@ -1,4 +1,9 @@
 export interface InterviewResult {
+  candidate: Candidate;
+  interview_summary: InterviewSummary;
+}
+
+export interface InterviewSummary {
   passed: boolean;
   overall_score: number;
   technical_skill: number;

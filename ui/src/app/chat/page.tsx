@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, Clock } from "lucide-react";
 import { toast } from "sonner";
 import apiClient from "@/lib/api-client";
+import { useRouter } from "next/navigation"; // <-- ADDED
 
 interface Message {
   id: string;
@@ -30,6 +31,8 @@ export default function App() {
   const [questionTimerKey, setQuestionTimerKey] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [sessionID, setSessionID] = useState<string>("Unknow Session ID");
+
+  const router = useRouter(); // <-- ADDED
 
   // Timer
   useEffect(() => {
@@ -60,6 +63,7 @@ export default function App() {
           jd_id: "JD-001",
           cv_id: "CV-001",
         });
+
         console.log("AI response user's question:", resp);
         setSessionID(resp.data.session_id);
         console.log(resp.data.reply);
@@ -69,7 +73,7 @@ export default function App() {
         alert("ERROR: " + error.response.data.error);
       }
     };
-    // Call the async function
+
     initialize_interview();
   }, []);
 
@@ -102,16 +106,15 @@ export default function App() {
       setIsInterviewStarted(true);
     }
 
-    // Show the user's answer
     setIsInteractionLocked(true);
     handleAddMessage(sender == "user" ? "user" : "ai", content);
 
-    // Show the ai's response
     try {
       const resp = await apiClient.post("/routes/qna/answer", {
         session_id: sessionID,
         answer: content,
       });
+
       console.log("AI response user's question:", resp);
       handleAddMessage(resp.data.role, resp.data.reply);
       setCurrentQuestionIndex(resp.data.question.current_idx);
@@ -121,38 +124,8 @@ export default function App() {
       console.error("Error calling backend:", error);
       alert("ERROR: " + error.response.data.error);
     }
-    // Stop the question timer when user answers
+
     setIsQuestionActive(false);
-
-    // AI response after user answers
-    // setTimeout(() => {
-    //   const responses = [
-    //     "Great answer! I appreciate the detail you provided.",
-    //     "That's a solid response. I like how you structured your answer.",
-    //     "Excellent! You covered the key points well.",
-    //     "Good thinking! Your approach shows maturity.",
-    //     "Nice work! That demonstrates strong understanding.",
-    //   ];
-
-    //   const randomResponse =
-    //     responses[Math.floor(Math.random() * responses.length)];
-
-    //   const feedbackMessage: Message = {
-    //     id: messages.length + 1,
-    //     role: "ai",
-    //     content: `${randomResponse}\n\nLet's move on to the next question.`,
-    //     timestamp: new Date().toLocaleTimeString([], {
-    //       hour: "2-digit",
-    //       minute: "2-digit",
-    //     }),
-    //   };
-    //   setMessages((prev) => [...prev, feedbackMessage]);
-
-    //   // Ask next question after a short delay
-    //   setTimeout(() => {
-    //     askNextQuestion();
-    //   }, 1000);
-    // }, 800);
   };
 
   const handleToggleCamera = () => {
@@ -167,8 +140,9 @@ export default function App() {
         session_id: sessionID,
         answer: "Generate no more than 1 in total",
       });
+
       console.log("AI start response:", resp);
-      setMessages([]); // The conversation should empty after starting
+      setMessages([]); // reset conversation
       handleAddMessage(resp.data.role, resp.data.reply);
       setCurrentQuestionIndex(resp.data.question.current_idx);
       setTotalQuestion(resp.data.question.total);
@@ -224,16 +198,14 @@ export default function App() {
             />
           ))}
 
-          {/* Question Timer - shows when a question is active */}
+          {/* Question Timer */}
           {isQuestionActive && currentQuestionIndex > 0 && (
             <div className="my-4">
               <QuestionTimer
                 key={questionTimerKey}
                 isActive={isQuestionActive}
                 onTimeUp={() =>
-                  toast.warning(
-                    "Time's up! But feel free to continue with your answer.",
-                  )
+                  toast.warning("Time's up! But feel free to continue with your answer.")
                 }
               />
             </div>
@@ -250,6 +222,19 @@ export default function App() {
               >
                 <Sparkles className="mr-2 h-5 w-5" />
                 Start Interview
+              </Button>
+            </div>
+          )}
+
+          {/* ✅ NEW — View Result Button */}
+          {currentQuestionIndex >= totalQuestion && totalQuestion > 0 && (
+            <div className="mt-6 flex justify-center">
+              <Button
+                size="lg"
+                className="rounded-full px-8"
+                onClick={() => router.push(`/interview-results?session_id=${sessionID}`)}
+              >
+                View Result
               </Button>
             </div>
           )}

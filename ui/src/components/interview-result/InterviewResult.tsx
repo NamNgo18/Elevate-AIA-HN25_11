@@ -13,16 +13,17 @@ import {
 import type {
   Candidate,
   InterviewResult,
+  InterviewSummary,
 } from "@/features/interview-result/InterviewResult.types";
 
 interface InterviewResultProps {
   candidate: Candidate;
-  interviewResult: InterviewResult;
+  interviewSummary: InterviewSummary;
 }
 
 export function InterviewResult({
   candidate,
-  interviewResult,
+  interviewSummary,
 }: InterviewResultProps) {
   return (
     <div className="mx-auto w-full space-y-6 p-6">
@@ -33,14 +34,14 @@ export function InterviewResult({
           <div className="mb-4 flex items-center justify-center gap-4">
             <div
               className={`text-6xl ${
-                interviewResult.passed ? "text-green-600" : "text-red-600"
+                interviewSummary.passed ? "text-green-600" : "text-red-600"
               }`}
             >
-              {interviewResult.overall_score}
+              {interviewSummary.overall_score}
             </div>
             <div className="text-gray-500">/100</div>
           </div>
-          <Progress value={interviewResult.overall_score} className="h-3" />
+          <Progress value={interviewSummary.overall_score} className="h-3" />
         </div>
       </Card>
 
@@ -58,7 +59,7 @@ export function InterviewResult({
                 </div>
 
                 <div className="flex items-center gap-3">
-                  {interviewResult.passed ? (
+                  {interviewSummary.passed ? (
                     <>
                       <CheckCircle2 className="h-12 w-12 text-green-600" />
                       <Badge className="bg-green-600 px-4 py-2 text-lg text-white">
@@ -125,19 +126,19 @@ export function InterviewResult({
             <div className="space-y-6">
               <ScoreItem
                 label="Technical Skills"
-                score={interviewResult.technical_skill}
+                score={interviewSummary.technical_skill}
               />
               <ScoreItem
                 label="Problem Solving"
-                score={interviewResult.problem_solving}
+                score={interviewSummary.problem_solving}
               />
               <ScoreItem
                 label="Communication Skills"
-                score={interviewResult.communication}
+                score={interviewSummary.communication}
               />
               <ScoreItem
                 label="Practical Experience"
-                score={interviewResult.experience}
+                score={interviewSummary.experience}
               />
             </div>
           </Card>
@@ -149,7 +150,7 @@ export function InterviewResult({
         <Card className="p-6">
           <h3 className="mb-4 text-green-700">Strengths</h3>
           <ul className="space-y-3">
-            {interviewResult.pros.map((s, i) => (
+            {interviewSummary.pros.map((s, i) => (
               <li key={i} className="flex items-start gap-2">
                 <CheckCircle2 className="mt-0.5 h-5 w-5 text-green-600" />
                 <span className="text-gray-700">{s}</span>
@@ -161,7 +162,7 @@ export function InterviewResult({
         <Card className="p-6">
           <h3 className="mb-4 text-red-700">Areas for Improvement</h3>
           <ul className="space-y-3">
-            {interviewResult.cons.map((w, i) => (
+            {interviewSummary.cons.map((w, i) => (
               <li key={i} className="flex items-start gap-2">
                 <XCircle className="mt-0.5 h-5 w-5 text-red-600" />
                 <span className="text-gray-700">{w}</span>
