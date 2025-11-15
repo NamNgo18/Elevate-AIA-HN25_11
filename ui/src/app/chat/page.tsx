@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { ChatMessage } from "@/components/chat/ChatMessage";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { VideoPreview } from "@/components/chat/VideoPreview";
@@ -10,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, Clock } from "lucide-react";
 import { toast } from "sonner";
 import apiClient from "@/lib/api-client";
-import { useRouter } from "next/navigation"; // <-- ADDED
+import { useRouter } from "next/navigation";
 
 interface Message {
   id: string;
@@ -31,6 +32,7 @@ export default function App() {
   const [questionTimerKey, setQuestionTimerKey] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [sessionID, setSessionID] = useState<string>("Unknow Session ID");
+  const resultSearchParams = useSearchParams();
 
   const router = useRouter(); // <-- ADDED
 
@@ -114,7 +116,6 @@ export default function App() {
         session_id: sessionID,
         answer: content,
       });
-
       console.log("AI response user's question:", resp);
       handleAddMessage(resp.data.role, resp.data.reply);
       setCurrentQuestionIndex(resp.data.question.current_idx);
