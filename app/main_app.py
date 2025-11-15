@@ -25,8 +25,10 @@ def _setup_api(app: FastAPI = None) -> None:
     from app.routes.jd                  import  router          as  jd_router
     from app.routes.cv                  import  router          as  cv_router
     from app.routes.interview_report    import  router          as  report_router
+    from app.routes.jd_load             import  router          as  jd_cv_router
+    from app.routes.speech              import  router          as  speech_router
+    from app.routes.mail                import  router          as  send_mail
     from app.utilities.openAI_helper    import  OpenAIHelper
-
     # Initialize OpenAI Helper singleton
     OpenAIHelper()
 
@@ -43,6 +45,8 @@ def _setup_api(app: FastAPI = None) -> None:
     app.include_router(cv_router, prefix="/routes/cv")
     app.include_router(qna_router, prefix = "/routes/qna")
     app.include_router(report_router, prefix="/routes/report")
+    app.include_router(jd_cv_router, prefix = "/api")
+    app.include_router(send_mail, prefix = "/api") 
 
 # ========================================
 #           Backend FastAPI app

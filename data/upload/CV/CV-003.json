@@ -1,0 +1,58 @@
+{
+  "basics": {
+    "cv_id": "CV-003",
+    "name": "Trần Thị T",
+    "label": "Frontend Developer",
+    "email": "trant.frontend@email.com",
+    "phone_number": "0913813254",
+    "summary": "Lập trình viên Frontend với 5 năm kinh nghiệm, chuyên về React và Vue, tạo giao diện thân thiện người dùng cho các sản phẩm SaaS.",
+    "location": {
+      "city": "Đà Nẵng",
+      "countryCode": "VN"
+    }
+  },
+  "work": [
+    {
+      "name": "Startup B",
+      "position": "Frontend Engineer",
+      "startDate": "2020-03-01",
+      "endDate": "2025-10-01",
+      "highlights": [
+        "Xây dựng UI cho sản phẩm đạt 95% đánh giá tích cực từ người dùng.",
+        "Tối ưu hóa hiệu năng, tải trang dưới 2 giây."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "institution": "Đại học Đà Nẵng",
+      "area": "CNTT",
+      "studyType": "Đại học"
+    }
+  ],
+  "skills": [
+    {
+      "name": "Frontend",
+      "level": "Advanced",
+      "keywords": [
+        "React",
+        "Vue",
+        "Typescript"
+      ]
+    },
+    {
+      "name": "Thiết kế UI/UX",
+      "keywords": [
+        "Figma",
+        "Adobe XD"
+      ]
+    }
+  ],
+  "awards": [
+    {
+      "title": "UI Champion",
+      "date": "2022-11-20",
+      "awarder": "Startup B"
+    }
+  ]
+}
