@@ -1,42 +1,59 @@
-import { InterviewResult } from "@/components/interview-result/InterviewResult";
+"use client";
 
-function App() {
-  // Mock interview data
-  const interviewData = {
-    interviewee: {
-      name: "Sarah Johnson",
-      email: "sarah.johnson@email.com",
-      phone: "+1 (555) 123-4567",
-      position: "Senior Frontend Developer",
-    },
-    overallScore: 85,
-    passed: true,
-    detailedScores: {
-      technicalSkills: 90,
-      problemSolving: 85,
-      communicationSkill: 88,
-      practicalExperience: 82,
-      enthusiasmAttitude: 92,
-    },
-    strengths: [
-      "Excellent understanding of React and modern frontend frameworks",
-      "Strong problem-solving abilities with clear thought process",
-      "Great communication skills and ability to explain complex concepts",
-      "Demonstrated enthusiasm for learning new technologies",
-      "Solid grasp of software design patterns and best practices",
-    ],
-    weaknesses: [
-      "Limited experience with backend technologies",
-      "Could improve knowledge of automated testing strategies",
-      "Less familiar with CI/CD pipelines and DevOps practices",
-    ],
-  };
+import { useEffect, useState, useRef } from "react";
+import { InterviewResult } from "@/components/interview-result/InterviewResult";
+import { useInterviewResult } from "@/features/interview-result/useInterviewResult";
+import { CandidateData } from "@/features/interview-result/InterviewResult.types";
+
+function InterviewResultPage() {
+  const { interviewReport, loading, generateResult } = useInterviewResult();
+
+  const [candidateData] = useState<CandidateData | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const stored = sessionStorage.getItem("interviewData");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const hasCalledRef = useRef(false);
+
+  useEffect(() => {
+    if (!candidateData) return;
+    if (hasCalledRef.current) return;
+
+    hasCalledRef.current = true;
+    generateResult(candidateData).catch((err) =>
+      console.error("Failed to generate interview result:", err),
+    );
+  }, [candidateData, generateResult]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 py-8">
+        <p className="text-gray-600">Generating interview result...</p>
+      </div>
+    );
+  }
+
+  if (!interviewReport || !candidateData) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 py-8">
+        <p className="text-gray-600">No interview data available</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <InterviewResult {...interviewData} />
+      <InterviewResult
+        candidate={candidateData.candidate}
+        interviewResult={interviewReport}
+      />
     </div>
   );
 }
 
-export default App;
+export default InterviewResultPage;
