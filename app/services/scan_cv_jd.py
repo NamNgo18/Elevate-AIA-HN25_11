@@ -90,8 +90,7 @@ def read_cv_by_json(folder_path, item_type):
                 try:
                     data = json.load(f)
                     if item_type == 'cv':
-                        # Save the entire CV content as a JSON string to pass to the LLM
-                        items.append({"id": filename, "content": json.dumps(data, ensure_ascii=False, indent=2)})
+                        items.append({"id": data.get('basics', {}).get('cv_id'), "content": json.dumps(data, ensure_ascii=False, indent=2)})
                     else:
                         items.append(data)
                 except json.JSONDecodeError:
@@ -208,38 +207,29 @@ def get_batch_matching_results(jd_id: str) -> List[Dict[str, Any]]:
     jd_folder = os.path.join(current_dir,'data', 'upload', 'JD')
     cv_folder = os.path.join(current_dir,'data', 'upload', 'CV')
 
-    # 1. Đọc dữ liệu
     all_cvs = read_cv_by_json(cv_folder, 'cv')
     
-    # Đọc TẤT CẢ JD
     job_summaries = read_cv_by_json(jd_folder, 'jd')
     
     job_summary_data = None
     
-    # ⚠️ THAY ĐỔI LỚN: TÌM JD TƯƠNG ỨNG VỚI jd_id
     for jd in job_summaries:
         if jd.get('metadata', {}).get('jd_id') == jd_id:
             job_summary_data = jd
-            break # Tìm thấy thì dừng
+            break
     
     if not all_cvs:
-        # Trường hợp không có CV nào
         return []
 
     if not job_summary_data:
-        # Trường hợp không tìm thấy JD tương ứng với ID
         print(f"CẢNH BÁO: Không tìm thấy JD với ID '{jd_id}' trong thư mục DB.")
         return []
     
-    # 2. Batch Process: Chỉ so khớp CV với JD cụ thể đó
-    # Gọi hàm process_cv_batch() đã được định nghĩa ở trên
     batch_results = process_cv_batch(all_cvs, job_summary_data)
     
-    # 3. Format the results for the frontend
     formatted_results = []
     for result in batch_results:
         if "match_data" in result:
-            # Lấy dữ liệu từ match_data
             match_data = result["match_data"]
             
             formatted_results.append({
@@ -258,4 +248,47 @@ def get_batch_matching_results(jd_id: str) -> List[Dict[str, Any]]:
                 "missing_skills": match_data.get("missing_skills"),
             })
             
+    return formatted_results
+
+def find_infor_cv_jd(jd_id: str, cv_id: str) -> List[Dict[str, Any]]:
+    current_dir = Path(__file__).resolve().parent.parent.parent
+    jd_folder = os.path.join(current_dir,'data', 'upload', 'JD')
+    cv_folder = os.path.join(current_dir,'data', 'upload', 'CV')
+    all_cvs = read_cv_by_json(cv_folder, 'cv')
+    
+    job_summaries = read_cv_by_json(jd_folder, 'jd')
+    
+    job_name = None
+    for jd in job_summaries:
+        if jd.get('metadata', {}).get('jd_id') == jd_id:
+            job_name = jd.get('basic_info', {}).get('job_title')
+            break
+        
+    cv_name = None
+    for cv in all_cvs:
+    # 1. Check if the ID matches
+        if cv.get('id') == cv_id:
+            cv_content_str = cv.get('content')
+            if cv_content_str:
+                try:
+                    # Use json.loads() to parse a JSON string
+                    cv_data = json.loads(cv_content_str)
+                    # Safely retrieve the nested name
+                    cv_name = cv_data.get('basics', {}).get('name')
+                    print(f"Found name: {cv_name}")
+                    break
+                except json.JSONDecodeError as e:
+                    print(f"Error decoding JSON for CV ID {cv_id}: {e}")
+                    cv_name = None
+            else:
+                print(f"CV ID {cv_id} found but 'content' is missing.")
+                cv_name = None
+            if cv_name is not None:
+                break
+            break
+    formatted_results = []
+    formatted_results.append({
+        'cv_name': cv_name,
+        'jd_name': job_name
+    })
     return formatted_results

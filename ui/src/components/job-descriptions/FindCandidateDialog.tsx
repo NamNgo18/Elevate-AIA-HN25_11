@@ -71,6 +71,7 @@ export function FindCandidateDialog({
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [jdId, setJdId] = useState<string>();
 
 
   // useEffect to call the API
@@ -100,6 +101,7 @@ export function FindCandidateDialog({
           );
 
           setCandidates(mappedCandidates);
+          setJdId(jd_id)
         } catch (err) {
           console.error("Could not fetch candidates:", err);
           setError("Failed to load candidates. Please try again.");
@@ -209,6 +211,7 @@ export function FindCandidateDialog({
 
       {/* 2. CANDIDATE DETAIL DIALOG */}
       <DialogDetailCV
+        jdId={jdId}
         open={isDetailDialogOpen}
         onOpenChange={setIsDetailDialogOpen}
         Candidate={selectedCandidateDetail}
