@@ -5,6 +5,7 @@ from datetime import datetime
 
 from app.utilities.openAI_helper import OpenAIHelper
 from app.services.qna_generator import handle_build_interview_summary
+from app.services.report_service import report_service
 
 class ReportGenerator:
     def __init__(self):
@@ -33,8 +34,8 @@ class ReportGenerator:
             return f"{cand}_{pos}_{ts}.json"
         return f"{cand}_{ts}.json"
 
-    def _save_report(self, candidate_name: str, position: str, report_obj: dict) -> None:
-        """Save the JSON report internally."""
+    def _save_report(self, session_id: str, candidate_name: str, position: str, report_obj: dict) -> None:
+        """Save the JSON report internally and update CSV metadata."""
         report_dir = self._get_report_dir()
         report_dir.mkdir(parents=True, exist_ok=True)
 
@@ -43,6 +44,12 @@ class ReportGenerator:
 
         with open(path, "w", encoding="utf-8") as f:
             json.dump(report_obj, f, indent=2, ensure_ascii=False)
+            
+        # Update CSV metadata
+        try:
+            report_service.add_report(session_id, filename, candidate_name, position)
+        except Exception as e:
+            print(f"Error updating report metadata: {e}")
 
     # ----------------------------
     # Extracting candidate info
@@ -98,8 +105,25 @@ Respond strictly as JSON with this structure:
             return None
 
     def report_interview(self, session_id: str) -> dict:
-        # Get the raw interview JSON
+        # 1. Check if a report already exists in the history (CSV/disk)
+        stored_report = report_service.load_report(session_id)
+        if stored_report:
+            # If the stored report is missing candidate info (legacy format), try to add it
+            if "candidate" not in stored_report:
+                report_meta = report_service.get_by_id(session_id)
+                stored_report = {
+                    "candidate": {
+                        "name": report_meta.get("candidate_name") if report_meta else "Unknown",
+                        "target_position": report_meta.get("position") if report_meta else "Unknown",
+                    },
+                    "interview_summary": stored_report
+                }
+            return stored_report
+
+        # 2. Get the raw interview JSON from live session
         interview_json = handle_build_interview_summary(session_id)
+        if not interview_json:
+            return {"error": f"Session ID {session_id} not found."}
 
         # Extract candidate info
         candidate_info = interview_json.get("candidate", {})
@@ -139,18 +163,18 @@ Respond strictly as JSON with this structure:
                 "candidate": candidate_info
             }
 
-        # Save report internally
-        try:
-            candidate_name = candidate_info.get("name", "report")
-            position = candidate_info.get("target_position", "")
-            self._save_report(candidate_name, position, parsed)
-        except Exception:
-            pass
-
         # Merge candidate info with evaluation summary
         final_output = {
             "candidate": candidate_info,
             "interview_summary": parsed
         }
+
+        # Save report internally
+        try:
+            candidate_name = candidate_info.get("name", "report")
+            position = candidate_info.get("target_position", "")
+            self._save_report(session_id, candidate_name, position, final_output)
+        except Exception:
+            pass
 
         return final_output

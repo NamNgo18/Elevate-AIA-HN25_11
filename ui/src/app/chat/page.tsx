@@ -19,7 +19,10 @@ interface Message {
   timestamp: string;
 }
 
+import { useLanguage } from "@/contexts/LanguageContext";
+
 export default function App() {
+  const { t } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [totalQuestion, setTotalQuestion] = useState(0);
@@ -63,7 +66,7 @@ export default function App() {
       setIsInteractionLocked(true);
       handleAddMessage(
         "ai",
-        `🎯 Interview Practice Guidelines\n\nWelcome! Please review these instructions to help you perform successfully in your interview.\n\n🧩 1. Interview Format\n\nThe interview will include a few main questions.\nSome questions may include follow-up (sub) questions to clarify your answers or gather more details.\n\n💬 2. How to Answer\n\nYou have two options for answering:\n✏️ Type your answer in the input box.\n🎤 Speak your answer by clicking the microphone icon.\n\n🌟 3. Tips for a Successful Interview\n\n🌬️ Take a deep breath before you begin.\n🤫 Stay in a quiet, distraction-free space.\n👂 Listen carefully to each question.\n🗣️ Answer clearly and confidently — be concise and natural.\n💡 If you don’t understand a question, it’s okay to ask for clarification.`,
+        `🎯 ${t("interviewGuidelines")}\n\n${t("welcomeMessage")}\n\n🧩 ${t("interviewFormat")}\n\n${t("interviewFormatDesc")}\n\n💬 ${t("howToAnswer")}\n\n${t("howToAnswerDesc")}\n\n🌟 ${t("tipsTitle")}\n\n${t("tipsDesc")}`,
       );
 
       try {
@@ -75,17 +78,16 @@ export default function App() {
         setSessionID(resp.data.session_id);
         console.log(resp.data.reply);
         setIsInteractionLocked(false);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error calling backend:", error);
-        alert("ERROR: " + (error.response?.data?.error || error.message));
+        alert(`${t("error")}: ` + (error.response?.data?.error || error.message));
       }
     };
 
     const jdIDParser = resultSearchParams.get("jd_id");
     const cvIdParser = resultSearchParams.get("cv_id");
     if (!jdIDParser) {
-      const err_msg: string =
-        "Perhaps the job description ID or CV ID was not provided!";
+      const err_msg: string = t("missingIdsError");
       console.log(
         err_msg + "\nJD ID : " + jdIDParser + "\nCV ID : " + cvIdParser,
       );
@@ -98,7 +100,7 @@ export default function App() {
     }
     // Call the async function
     initializeInterview();
-  }, []);
+  }, [t]);
 
   const formatTime = (totalSeconds: number) => {
     const mins = Math.floor(totalSeconds / 60);
@@ -153,7 +155,7 @@ export default function App() {
         // Fixed congratulatory message
         handleAddMessage(
           "ai",
-          "🎉 Congratulations on finishing the interview! Click the View Result button to see your result.",
+          `🎉 ${t("congratulations")}`,
         );
         setIsInterviewCompleted(true);
       }
@@ -161,7 +163,7 @@ export default function App() {
       setIsInteractionLocked(false);
     } catch (error: any) {
       console.error("Error calling backend:", error);
-      alert("ERROR: " + (error.response?.data?.error || error.message));
+      alert(`${t("error")}: ` + (error.response?.data?.error || error.message));
     }
 
     setIsQuestionActive(false);
@@ -169,7 +171,7 @@ export default function App() {
 
   const handleToggleCamera = () => {
     setIsCameraOn(!isCameraOn);
-    toast.info(isCameraOn ? "Camera disabled" : "Camera enabled");
+    toast.info(isCameraOn ? t("cameraDisabled") : t("cameraEnabled"));
   };
 
   const handleStartInterview = async () => {
@@ -188,35 +190,44 @@ export default function App() {
       setIsInteractionLocked(false);
     } catch (error: any) {
       console.error("Error calling backend:", error);
-      alert("ERROR: " + (error.response?.data?.error || error.message));
+      alert(`${t("error")}: ` + (error.response?.data?.error || error.message));
     }
   };
 
   return (
-    <div className="bg-background flex h-screen flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950 flex flex-col h-screen overflow-hidden">
+      {/* Animated background pattern */}
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-purple-800/15 via-transparent to-transparent pointer-events-none" />
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-blue-800/15 via-transparent to-transparent pointer-events-none" />
+
       {/* Header */}
-      <header className="border-border flex-shrink-0 border-b bg-white px-6 py-4">
+      <header className="relative flex-shrink-0 border-b border-white/10 bg-white/5 backdrop-blur-xl px-6 py-4 shadow-lg">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="bg-primary flex h-10 w-10 items-center justify-center rounded-full">
-              <Sparkles className="text-primary-foreground h-5 w-5" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-blue-500 shadow-lg shadow-purple-500/50">
+              <Sparkles className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl">AI-X</h1>
-              <p className="text-muted-foreground text-sm">
-                AI-Powered Interview Practice
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
+                {t("interviewPracticeTitle")}
+              </h1>
+              <p className="text-slate-300 text-sm">
+                {t("interviewPracticeSubtitle")}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
-            <Badge variant="secondary" className="px-3 py-1.5">
-              Question {Math.min(currentQuestionIndex, totalQuestion)} /{" "}
+            <Badge
+              variant="secondary"
+              className="px-4 py-2 bg-gradient-to-r from-purple-500/20 to-blue-500/20 backdrop-blur-sm border border-purple-400/30 text-purple-200 shadow-lg"
+            >
+              {t("questionNum")} {Math.min(currentQuestionIndex, totalQuestion)} /{" "}
               {totalQuestion}
             </Badge>
-            <div className="bg-accent/50 flex items-center gap-2 rounded-lg px-4 py-2">
-              <Clock className="text-accent-foreground h-4 w-4" />
-              <span className="text-accent-foreground font-mono">
+            <div className="flex items-center gap-2 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-2 shadow-lg">
+              <Clock className="h-5 w-5 text-blue-400" />
+              <span className="font-mono text-lg text-slate-200">
                 {formatTime(interviewTime)}
               </span>
             </div>
@@ -225,7 +236,7 @@ export default function App() {
       </header>
 
       {/* Chat Area */}
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <div className="relative flex-1 overflow-y-auto px-6 py-6 scrollbar-thin scrollbar-thumb-purple-500/50 scrollbar-track-transparent">
         <div className="mx-auto max-w-4xl">
           {messages.map((message) => (
             <ChatMessage
@@ -244,7 +255,7 @@ export default function App() {
                 isActive={isQuestionActive}
                 onTimeUp={() =>
                   toast.warning(
-                    "Time's up! But feel free to continue with your answer.",
+                    t("timesUp"),
                   )
                 }
               />
@@ -256,12 +267,12 @@ export default function App() {
             <div className="mt-6 flex justify-center">
               <Button
                 size="lg"
-                className="rounded-full px-8"
+                className="rounded-full px-10 py-6 text-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white border-0 shadow-lg shadow-purple-500/50 transition-all duration-300 hover:shadow-purple-500/70 hover:scale-105"
                 onClick={handleStartInterview}
                 disabled={isInteractionLocked}
               >
-                <Sparkles className="mr-2 h-5 w-5" />
-                Start Interview
+                <Sparkles className="mr-2 h-6 w-6" />
+                {t("startInterview")}
               </Button>
             </div>
           )}
@@ -271,12 +282,12 @@ export default function App() {
             <div className="mt-6 flex justify-center">
               <Button
                 size="lg"
-                className="rounded-full px-8"
+                className="rounded-full px-10 py-6 text-lg bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white border-0 shadow-lg shadow-emerald-500/50 transition-all duration-300 hover:shadow-emerald-500/70 hover:scale-105"
                 onClick={() =>
                   router.push(`/interview-results?session_id=${sessionID}`)
                 }
               >
-                View Result
+                {t("viewResult")}
               </Button>
             </div>
           )}

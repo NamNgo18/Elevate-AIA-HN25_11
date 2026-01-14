@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { getApiUrl } from "@/lib/api";
 import {
   Dialog,
   DialogContent,
@@ -15,11 +16,14 @@ interface UploadJDDialogProps {
   onUploadSuccess: (fileName: string) => void;
 }
 
+import { useLanguage } from "@/contexts/LanguageContext";
+
 export function UploadJDDialog({
   open,
   onOpenChange,
   onUploadSuccess,
 }: UploadJDDialogProps) {
+  const { t } = useLanguage();
   const [dragActive, setDragActive] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -48,10 +52,10 @@ export function UploadJDDialog({
       ) {
         setUploadedFile(file);
       } else {
-        alert("Please upload only PDF or DOCX files");
+        alert(t("pdfDocxOnly"));
       }
     }
-  }, []);
+  }, [t]);
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -63,7 +67,7 @@ export function UploadJDDialog({
       ) {
         setUploadedFile(file);
       } else {
-        alert("Please upload only PDF or DOCX files");
+        alert(t("pdfDocxOnly"));
       }
     }
   };
@@ -75,16 +79,18 @@ export function UploadJDDialog({
       const formData = new FormData();
       formData.append("file", uploadedFile);
 
-      const response = await fetch("http://127.0.0.1:8000/routes/jd", {
+      const response = await fetch(getApiUrl("routes/jd"), {
         method: "POST",
         body: formData,
       });
       if (!response.ok) {
-        alert("Failed to upload file");
+        alert(t("failedToUpload"));
+        setIsLoading(false);
         return;
       }
       onUploadSuccess(uploadedFile.name);
       setUploadedFile(null);
+      setIsLoading(false);
       onOpenChange(false);
     }
   };
@@ -98,9 +104,9 @@ export function UploadJDDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Upload New Job Description</DialogTitle>
+          <DialogTitle>{t("uploadJDTitle")}</DialogTitle>
           <DialogDescription>
-            Upload a job description document to start finding candidates
+            {t("uploadJDDesc")}
           </DialogDescription>
         </DialogHeader>
 
@@ -138,9 +144,9 @@ export function UploadJDDialog({
               <>
                 <Upload className="mx-auto mb-4 h-12 w-12 text-gray-400" />
                 <p className="mb-2 text-gray-700">
-                  Drag and drop your file here, or click to browse
+                  {t("dropFiles")}
                 </p>
-                <p className="text-gray-500">Supports PDF and DOCX files</p>
+                <p className="text-gray-500">{t("supportFiles")}</p>
                 <input
                   type="file"
                   accept=".pdf,.docx"
@@ -153,33 +159,33 @@ export function UploadJDDialog({
 
           <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
             <h3 className="mb-3 text-blue-900">
-              Best Practices for JD Scanning
+              {t("jdBestPracticesTitle")}
             </h3>
             <ul className="space-y-2 text-blue-800">
               <li className="flex items-start gap-2">
                 <span className="mt-1 text-blue-600">•</span>
-                <span>Include clear job title and position level</span>
+                <span>{t("jdBestPractice1")}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-1 text-blue-600">•</span>
-                <span>List required skills and technologies explicitly</span>
+                <span>{t("jdBestPractice2")}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-1 text-blue-600">•</span>
-                <span>Specify years of experience required</span>
+                <span>{t("jdBestPractice3")}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-1 text-blue-600">•</span>
-                <span>Include educational requirements and certifications</span>
+                <span>{t("jdBestPractice4")}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-1 text-blue-600">•</span>
-                <span>Use standard formatting with clear sections</span>
+                <span>{t("jdBestPractice5")}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-1 text-blue-600">•</span>
                 <span>
-                  Avoid images or complex layouts for better text extraction
+                  {t("jdBestPractice6")}
                 </span>
               </li>
             </ul>
@@ -187,13 +193,13 @@ export function UploadJDDialog({
 
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={handleClose}>
-              Cancel
+              {t("cancel")}
             </Button>
             <Button
               onClick={handleUpload}
               disabled={!uploadedFile || isLoading}
             >
-              {isLoading ? "Uploading..." : "Upload JD"}
+              {isLoading ? t("uploading") : t("uploadJD")}
             </Button>
           </div>
         </div>

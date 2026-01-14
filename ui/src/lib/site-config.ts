@@ -1,9 +1,9 @@
 import { env } from "@/env.mjs";
 
 export const siteConfig = {
-  title: "Next.js Starter",
+  title: "AI HR Assistant",
   description:
-    "A Next.js starter template, packed with features like TypeScript, Tailwind CSS, Next-auth, Eslint, testing tools and more. Jumpstart your project with efficiency and style.",
+    "AI HR Assistant",
   keywords: ["Next.js", "TypeScript", "Tailwind CSS", "Next-auth"],
   url: env.NEXT_PUBLIC_BACKEND_URL,
   // googleSiteVerificationId: env.GOOGLE_SITE_VERIFICATION_ID || "",

@@ -80,7 +80,8 @@ def parse_content_to_json(
             model=model,
             messages=messages,
             tools=[openai_tool],
-            tool_choice={"type": "function", "function": {"name": "parse_content"}}
+            tool_choice={"type": "function", "function": {"name": "parse_content"}},
+            temperature=0
         )
     except Exception as e:
         print(f"Error during OpenAI API call: {e}")

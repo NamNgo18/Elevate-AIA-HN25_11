@@ -31,10 +31,16 @@ def _run_command(cmd_in: list[str], cwd=None):
 # ========================================
 
 def _pnpm_install(react_project_dir: str = "ui"):
-    """Run 'pnpm install' in the React project if needed."""
-    if not _check_tool_installed("pnpm"):
-        print("❌ pnpm not found. Try to install pnpm tool using: npm i -g pnpm")
-        _run_command(["npm", "install", "-g", "pnpm"])
+    """Run 'npx pnpm install' in the React project if needed."""
+    # Check if pnpm is available (either globally or we'll use npx)
+    use_npx = not _check_tool_installed("pnpm")
+    
+    if use_npx:
+        print("ℹ️ pnpm not found globally. Will use 'npx pnpm' instead.")
+        pnpm_base_cmd = ["npx", "pnpm@latest"]
+    else:
+        print("✅ Using globally installed pnpm")
+        pnpm_base_cmd = ["pnpm"]
 
     project_dir = (Path(__file__).resolve().parent.parent / react_project_dir).resolve()
     package_json_path = project_dir / "package.json"
@@ -58,7 +64,7 @@ def _pnpm_install(react_project_dir: str = "ui"):
     # If node_modules doesn't exist, we must install
     if not node_modules_dir.exists():
         print("📦 node_modules not found — running pnpm install...")
-        _run_command(["pnpm", "install"], cwd=str(project_dir))
+        _run_command(pnpm_base_cmd + ["install"], cwd=str(project_dir))
         return
 
     # Check if all dependencies exist inside node_modules
@@ -71,7 +77,7 @@ def _pnpm_install(react_project_dir: str = "ui"):
     if missing:
         print(f"📦 Missing dependencies detected")
         print("🔧 Running pnpm install to fix...")
-        _run_command(["pnpm", "install"], cwd=str(project_dir))
+        _run_command(pnpm_base_cmd + ["install"], cwd=str(project_dir))
     else:
         print("✅ All dependencies already installed. Skipping pnpm install.")
 

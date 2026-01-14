@@ -22,7 +22,7 @@ def scan_cv_endpoint():
     return processed_data
 
 @router.get("/batch-match", response_model=List[Dict[str, Any]])
-def batch_match_endpoint(jd_id: str):
-    results = get_batch_matching_results(jd_id=jd_id)
+async def batch_match_endpoint(jd_id: str):
+    results = await get_batch_matching_results(jd_id=jd_id)
     return results
 

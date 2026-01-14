@@ -1,32 +1,36 @@
 import json
 import os
-from openai import AzureOpenAI
+from openai import OpenAI, AsyncOpenAI
+import asyncio
 from typing import List, Dict, Any
 from pathlib import Path
 from dotenv import load_dotenv
 
 # =======================================================
-# 1. Config Azure OpenAI
+# 1. Config OpenAI / OpenRouter
 # =======================================================
 load_dotenv()
-AZURE_OPENAI_KEY = os.getenv("OPENAI_API_KEY")
-AZURE_OPENAI_ENDPOINT = os.getenv("OPENAI_URL")
-AZURE_OPENAI_DEPLOYMENT_NAME = os.getenv("OPENAI_QNA_MODEL")
-AZURE_OPENAI_API_VERSION = "2024-07-01-preview"
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_BASE_URL = os.getenv("OPENAI_URL")
+OPENAI_MODEL = os.getenv("OPENAI_QNA_MODEL")
 
 # Setting Client
 client = None
+async_client = None
 try:
-    if not all([AZURE_OPENAI_KEY, AZURE_OPENAI_ENDPOINT]):
-        print("WARNING: Please set the environment variables AZURE_OPENAI_KEY and AZURE_OPENAI_ENDPOINT.")
+    if not all([OPENAI_API_KEY, OPENAI_BASE_URL]):
+        print("WARNING: Please set the environment variables OPENAI_API_KEY and OPENAI_URL.")
     else:
-        client = AzureOpenAI(
-            api_key=AZURE_OPENAI_KEY,
-            azure_endpoint=AZURE_OPENAI_ENDPOINT,
-            api_version=AZURE_OPENAI_API_VERSION
+        client = OpenAI(
+            api_key=OPENAI_API_KEY,
+            base_url=OPENAI_BASE_URL
+        )
+        async_client = AsyncOpenAI(
+            api_key=OPENAI_API_KEY,
+            base_url=OPENAI_BASE_URL
         )
 except Exception as e:
-    print(f"Azure OpenAI configuration error: {e}")
+    print(f"OpenAI configuration error: {e}")
 
 # =======================================================
 # 2. Definition of the Function Calling feature (Tool)
@@ -52,22 +56,22 @@ tools = [
         "type": "function",
         "function": {
             "name": "match_cv_to_job",
-            "description": "Đánh giá mức độ phù hợp của hồ sơ ứng viên (CV) với mô tả công việc, dựa trên kỹ năng, kinh nghiệm và chứng chỉ.",
+            "description": "Assess the alignment between a candidate's profile (CV) and a job description, based on skills, experience, and certifications.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "name": {"type": "string", "description": "Họ và tên của ứng viên"},
-                    "phone_number": {"type": "string", "description": "Số điện thoại của ứng viên"},
-                    "email": {"type": "string", "description": "Địa chỉ email của ứng viên"},
-                    "work": {"type": "string", "description": "Thông tin công việc mà ứng viên đã làm trước đó"},
-                    "education": {"type": "string", "description": "Thông tin các trường đại học mà ứng viên đã học"},
-                    "skills": {"type": "string", "description": "Các skills mà ứng viên có"},
-                    "awards": {"type": "string", "description": "Những awards mà ứng viên có"},
-                    "match_score": {"type": "integer", "description": "Điểm số từ 0 đến 100."},
-                    "explanation": {"type": "string", "description": "Tóm tắt lý do cho điểm số."},
-                    "missing_skills": {"type": "array", "items": {"type": "string"}, "description": "Danh sách các kỹ năng quan trọng mà CV **thiếu**."},
+                    "name": {"type": "string", "description": "Candidate's full name"},
+                    "phone_number": {"type": "string", "description": "Candidate's phone number"},
+                    "email": {"type": "string", "description": "Candidate's email address"},
+                    "work": {"type": "string", "description": "Information about the candidate's previous work experience"},
+                    "education": {"type": "string", "description": "Information about the universities the candidate attended"},
+                    "skills": {"type": "string", "description": "The skills the candidate possesses"},
+                    "awards": {"type": "string", "description": "The awards the candidate has received"},
+                    "match_score": {"type": "integer", "description": "A score from 0 to 100."},
+                    "explanation": {"type": "string", "description": "Summary of the reasoning for the score."},
+                    "missing_skills": {"type": "array", "items": {"type": "string"}, "description": "A list of important skills that are **missing** from the CV."},
                 },
-                "required": ["name","phone_number","email","match_score", "explanation", "missing_skills"],
+                "required": ["name", "phone_number", "email", "match_score", "explanation", "missing_skills"],
             },
         }
     }
@@ -101,37 +105,29 @@ def read_cv_by_json(folder_path, item_type):
 # =======================================================
 # 4. Batch Process Function
 # =======================================================
-def process_cv_batch(cv_list: List[Dict[str, Any]], job_summary: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """
-    Perform batch processing of CVs by sending each CV and the corresponding Job Summary to Azure OpenAI, utilizing Function Calling to evaluate their relevance.
-    """
-    if not client:
-        return []
-    
-    job_title = job_summary.get('basic_info', {}).get('job_title', 'Job Title Unknown')
-    job_summary_str = json.dumps(job_summary, ensure_ascii=False, indent=2)
-    results = []
-    
-    for cv_data in cv_list:
+async def process_cv_single(cv_data: Dict[str, Any], job_summary_str: str, job_title: str, semaphore: asyncio.Semaphore) -> Dict[str, Any]:
+    """Process a single CV asynchronously."""
+    async with semaphore:
         cv_id = cv_data["id"]
         cv_content_str = cv_data["content"]
         
         system_prompt = (
-            "Bạn là một chuyên gia Tuyển dụng. Nhiệm vụ của bạn là so sánh một Hồ sơ Ứng viên (CV) với Mô tả Công việc (Job Summary) và sử dụng hàm `match_cv_to_job` để trả về điểm số, giải thích và các kỹ năng còn thiếu. "
-            "Đánh giá một cách nghiêm túc, khách quan, dựa trên các tiêu chí trong phần 'match_criteria' của Job Summary và chỉ sử dụng hàm sau khi đánh giá. Chỉ sử dụng hàm `match_cv_to_job`."
+            "You are a Recruitment Expert. Your task is to compare a Candidate Profile (CV) with a Job Summary and use the function `match_cv_to_job` to return a score, an explanation, and any missing skills. "
+            "Evaluate strictly and objectively based on the criteria in the 'match_criteria' section of the Job Summary and only use the function after evaluation. Use only the function `match_cv_to_job`."
         )
         user_prompt = (
-            f"Đây là Mô tả Công việc:\n---\n{job_summary_str}\n---\n\n"
-            f"Đây là Hồ sơ Ứng viên (CV) cần đánh giá:\n---\n{cv_content_str}\n---\n"
-            "Hãy đánh giá và gọi hàm `match_cv_to_job`."
+            f"This is the Job Description:\n---\n{job_summary_str}\n---\n\n"
+            f"This is the Candidate Profile (CV) to be evaluated:\n---\n{cv_content_str}\n---\n"
+            "Please evaluate and call the function `match_cv_to_job`."
         )
         
         try:
-            response = client.chat.completions.create(
-                model=AZURE_OPENAI_DEPLOYMENT_NAME,
+            response = await async_client.chat.completions.create(
+                model=OPENAI_MODEL,
                 messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
                 tools=tools,
-                tool_choice={"type": "function", "function": {"name": "match_cv_to_job"}}
+                tool_choice={"type": "function", "function": {"name": "match_cv_to_job"}},
+                temperature=0
             )
             
             tool_calls = response.choices[0].message.tool_calls
@@ -139,17 +135,33 @@ def process_cv_batch(cv_list: List[Dict[str, Any]], job_summary: Dict[str, Any])
                 arguments = json.loads(tool_calls[0].function.arguments)
                 match_result = match_cv_to_job(**arguments)
                 
-                results.append({
+                return {
                     "cv_id": cv_id,
                     "job_title": job_title,
                     "match_data": match_result
-                })
+                }
             else:
-                results.append({"cv_id": cv_id, "error": "LLM did not call the match_cv_to_job function."})
+                return {"cv_id": cv_id, "error": "LLM did not call the match_cv_to_job function."}
 
         except Exception as e:
-            results.append({"cv_id": cv_id, "error": f"API or parsing error: {e}"})
+            return {"cv_id": cv_id, "error": f"API or parsing error: {e}"}
 
+async def process_cv_batch(cv_list: List[Dict[str, Any]], job_summary: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """
+    Perform batch processing of CVs by sending each CV and the corresponding Job Summary to OpenAI asynchronously and in parallel.
+    """
+    if not async_client:
+        return []
+    
+    job_title = job_summary.get('basic_info', {}).get('job_title', 'Job Title Unknown')
+    job_summary_str = json.dumps(job_summary, ensure_ascii=False, indent=2)
+    
+    # Limit concurrency to avoid hitting rate limits too hard (e.g., 5 concurrent requests)
+    semaphore = asyncio.Semaphore(5)
+    
+    tasks = [process_cv_single(cv_data, job_summary_str, job_title, semaphore) for cv_data in cv_list]
+    results = await asyncio.gather(*tasks)
+    
     return results
 
 # =======================================================
@@ -201,7 +213,7 @@ def get_processed_jd_data() -> List[Dict[str, Any]]:
 
 # scan_cv_jd.py (Phần hàm get_batch_matching_results đã sửa)
 
-def get_batch_matching_results(jd_id: str) -> List[Dict[str, Any]]:
+async def get_batch_matching_results(jd_id: str) -> List[Dict[str, Any]]:
   
     current_dir = Path(__file__).resolve().parent.parent.parent
     jd_folder = os.path.join(current_dir,'data', 'upload', 'JD')
@@ -225,7 +237,7 @@ def get_batch_matching_results(jd_id: str) -> List[Dict[str, Any]]:
         print(f"CẢNH BÁO: Không tìm thấy JD với ID '{jd_id}' trong thư mục DB.")
         return []
     
-    batch_results = process_cv_batch(all_cvs, job_summary_data)
+    batch_results = await process_cv_batch(all_cvs, job_summary_data)
     
     formatted_results = []
     for result in batch_results:

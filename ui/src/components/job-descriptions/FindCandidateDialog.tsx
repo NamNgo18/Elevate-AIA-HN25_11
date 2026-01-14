@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { getApiUrl } from "@/lib/api";
 import {
   Dialog,
   DialogContent,
@@ -8,8 +9,9 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input"; // Thêm Input cho thanh search
+import { Button } from "@/components/ui/button";
 import { CandidateCard } from "./CandidateCard";
-import { Loader2, Search } from "lucide-react"; // Thêm Search icon
+import { Loader2, Search, RotateCw } from "lucide-react"; // Thêm Search icon
 import { DialogDetailCV } from "./DialogDetailCV";
 
 // --- INTERFACES ---
@@ -51,11 +53,14 @@ const mockCandidateDetail = (cv_id: string, name: string, email: string, phone_n
   suitabilityScore: Math.round(match_score * 100) / 100,
 });
 
+import { useLanguage } from "@/contexts/LanguageContext";
+
 export function FindCandidateDialog({
   open,
   onOpenChange,
   jobDescription,
 }: FindCandidateDialogProps) {
+  const { t } = useLanguage();
 
   // State to store the list of candidates (used for CandidateCard)
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -74,45 +79,46 @@ export function FindCandidateDialog({
   const [jdId, setJdId] = useState<string>();
 
 
+  // Function to call the API
+  const fetchCandidates = async (jd_id: string) => {
+    setIsLoading(true);
+    setError(null);
+    // Reset search term when a new job is loaded
+    setSearchTerm("");
+    try {
+      const response = await fetch(getApiUrl(`api/batch-match?jd_id=${jd_id}`));
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const results: CandidateResult[] = await response.json();
+      const data: CandidateResult[] = results.sort((a, b) => b.match_score - a.match_score);
+
+      // STORE ALL DATA FOR LATER DETAIL RETRIEVAL
+      setAllCandidateResults(data);
+
+      // Map data from API to Candidate format (used for Card view)
+      const mappedCandidates: Candidate[] = data.map(result =>
+        mockCandidateDetail(result.cv_id, result.name, result.email, result.phone_number, result.match_score)
+      );
+
+      setCandidates(mappedCandidates);
+      setJdId(jd_id);
+    } catch (err) {
+      console.error("Could not fetch candidates:", err);
+      setError(t("failedToDownload"));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // useEffect to call the API
   useEffect(() => {
     if (open && jobDescription?.jd_id) {
-      const fetchCandidates = async (jd_id: string) => {
-        setIsLoading(true);
-        setError(null);
-        // Reset search term when a new job is loaded
-        setSearchTerm("");
-        try {
-          const response = await fetch(`http://127.0.0.1:8000/api/batch-match?jd_id=${jd_id}`);
-
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-
-          const results: CandidateResult[] = await response.json();
-          const data: CandidateResult[] = results.sort((a, b) => b.match_score - a.match_score);
-
-          // STORE ALL DATA FOR LATER DETAIL RETRIEVAL
-          setAllCandidateResults(data);
-
-          // Map data from API to Candidate format (used for Card view)
-          const mappedCandidates: Candidate[] = data.map(result =>
-            mockCandidateDetail(result.cv_id, result.name, result.email, result.phone_number, result.match_score)
-          );
-
-          setCandidates(mappedCandidates);
-          setJdId(jd_id)
-        } catch (err) {
-          console.error("Could not fetch candidates:", err);
-          setError("Failed to load candidates. Please try again.");
-        } finally {
-          setIsLoading(false);
-        }
-      };
-
       fetchCandidates(jobDescription.jd_id);
     }
-  }, [open, jobDescription]);
+  }, [open, jobDescription, t]);
 
   // Filter candidates based on the search term
   const filteredCandidates = useMemo(() => {
@@ -154,55 +160,95 @@ export function FindCandidateDialog({
     <>
       {/* 1. CANDIDATE LIST DIALOG */}
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-h-[80vh] max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>Suitable Candidates</DialogTitle>
-            <DialogDescription>
-              {jobDescription
-                ? `Top matches for Job ID: ${jobDescription.jd_id}`
-                : "Top candidate matches"}
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent
+          className="max-h-[90vh] w-[60vw] max-w-[60vw] bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border-white/20 p-0 overflow-hidden shadow-2xl"
+          style={{ width: '60vw', maxWidth: '60vw' }}
+        >
+          <div className="p-8 border-b border-white/10 bg-white/5 backdrop-blur-xl">
+            <DialogHeader>
+              <div className="flex items-center justify-between gap-4 mb-2">
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center border border-purple-500/30">
+                    <Search className="h-6 w-6 text-purple-400" />
+                  </div>
+                  <div>
+                    <DialogTitle className="text-2xl font-bold text-white">{t("suitableCandidates")}</DialogTitle>
+                    <DialogDescription className="text-slate-400 mt-1">
+                      {jobDescription
+                        ? `${t("topMatches")} ${jobDescription.jd_id}`
+                        : t("topMatches")}
+                    </DialogDescription>
+                  </div>
+                </div>
 
-          {/* ⭐️ SEARCH BAR FOR CANDIDATES */}
-          <div className="relative pb-4">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
-            <Input
-              type="text"
-              placeholder="Search by name, email, or phone..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 border rounded-md w-full"
-            />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => jobDescription?.jd_id && fetchCandidates(jobDescription.jd_id)}
+                  disabled={isLoading}
+                  className="bg-white/5 border-white/10 hover:bg-white/10 text-slate-300 hover:text-white rounded-xl gap-2 transition-all duration-300"
+                >
+                  <RotateCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                  {t("refresh")}
+                </Button>
+              </div>
+            </DialogHeader>
+
+            {/* ⭐️ SEARCH BAR FOR CANDIDATES */}
+            <div className="relative mt-6">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+              <Input
+                type="text"
+                placeholder={t("searchPlaceholder")}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-12 pr-4 h-14 bg-white/10 border-white/20 text-white placeholder:text-slate-500 focus:border-purple-500/50 focus:ring-purple-500/20 rounded-2xl transition-all duration-300 shadow-inner"
+              />
+            </div>
           </div>
-          {/* ---------------------------------- */}
 
-          <ScrollArea className="h-[500px] pr-4">
-            <div className="space-y-4">
+          <ScrollArea className="h-[60vh] p-8">
+            <div className="space-y-6">
               {isLoading ? (
-                <div className="flex items-center justify-center h-[500px]">
-                  <Loader2 className="mr-2 h-8 w-8 animate-spin" />
-                  <span className="text-lg">Finding candidates...</span>
+                <div className="flex flex-col items-center justify-center h-64">
+                  <div className="relative">
+                    <div className="h-16 w-16 rounded-full border-4 border-purple-500/10 border-t-purple-500 animate-spin" />
+                    <Loader2 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-6 w-6 text-purple-400 animate-bounce" />
+                  </div>
+                  <span className="text-xl font-medium text-slate-300 mt-6">{t("findingCandidates")}</span>
+                  <p className="text-slate-500 mt-2">Checking our database for the best talent...</p>
                 </div>
               ) : error ? (
-                <div className="text-center text-red-500 p-4 border rounded">
-                  {error}
+                <div className="flex flex-col items-center justify-center h-64 bg-red-500/5 rounded-3xl border border-red-500/20 p-8">
+                  <div className="h-16 w-16 rounded-full bg-red-500/10 flex items-center justify-center mb-4">
+                    <Search className="h-8 w-8 text-red-500" />
+                  </div>
+                  <div className="text-center text-red-400 font-medium text-lg">
+                    {error}
+                  </div>
                 </div>
               ) : filteredCandidates.length === 0 ? (
-                <div className="text-center text-gray-500 p-4">
-                  {searchTerm
-                    ? `No candidates match the search term: "${searchTerm}"`
-                    : "No suitable candidates found for this job."}
+                <div className="flex flex-col items-center justify-center h-64 bg-white/5 rounded-3xl border border-white/10 border-dashed p-8">
+                  <div className="h-16 w-16 rounded-full bg-white/10 flex items-center justify-center mb-4">
+                    <Search className="h-8 w-8 text-slate-400" />
+                  </div>
+                  <div className="text-center text-slate-400 text-lg font-medium">
+                    {searchTerm
+                      ? `${t("noMatchSearch")} "${searchTerm}"`
+                      : t("noCandidatesFound")}
+                  </div>
                 </div>
               ) : (
-                filteredCandidates.map((candidate) => (
-                  <CandidateCard
-                    key={candidate.key}
-                    candidate={candidate}
-                    onContact={handleContact}
-                    onDetail={handleViewDetail}
-                  />
-                ))
+                <div className="grid grid-cols-1 gap-4">
+                  {filteredCandidates.map((candidate) => (
+                    <CandidateCard
+                      key={candidate.key}
+                      candidate={candidate}
+                      onContact={handleContact}
+                      onDetail={handleViewDetail}
+                    />
+                  ))}
+                </div>
               )}
             </div>
           </ScrollArea>

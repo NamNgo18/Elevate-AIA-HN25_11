@@ -51,12 +51,16 @@ def _run_frontend():
         script_dir = os.path.dirname(os.path.abspath(__file__))
         ui_dir = os.path.abspath(os.path.join(script_dir, "..", "ui"))
 
-        # ✅ Use pnpm.cmd on Windows, pnpm on others
-        pnpm_cmd = "pnpm.cmd" if sys.platform == "win32" else "pnpm"
+        # ✅ Use npx pnpm to avoid global install permission issues
+        if sys.platform == "win32":
+            pnpm_cmd = ["pnpm.cmd", "dev"]
+        else:
+            pnpm_cmd = ["npx", "pnpm@latest", "dev"]
+        
         webbrowser.open(os.getenv("APP_FRONTEND_URL").rstrip("/"))
 
         subprocess.Popen(
-            [pnpm_cmd, "dev"],
+            pnpm_cmd,
             cwd=ui_dir,
             env=os.environ,
             shell=(sys.platform == "win32"),  # ✅ allow PATH resolution

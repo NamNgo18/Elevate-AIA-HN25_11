@@ -3,7 +3,7 @@ CV_SCHEMA = {
   "type": "object",
   "properties": {
       "metadata": {
-          "description": "Thông tin về file CV gốc và thời gian quét (Model sẽ để null nếu không có trong text)",
+          "description": "Information about the original CV file and scan time (Model should set to null if not found in text)",
           "type": "object",
           "properties": {
               "cv_id": {"type": ["string", "null"], "format": "uuid"},
@@ -67,7 +67,7 @@ CV_SCHEMA = {
         "properties": {
           "institution": { "type": "string" },
           "area": { "type": "string", "description": "Field of study" },
-          "studyType": { "type": "string", "description": "e.g., 'Đại học'" }
+          "studyType": { "type": "string", "description": "e.g., 'University'" }
         },
         "required": ["institution", "area", "studyType"]
       }
@@ -111,7 +111,7 @@ JD_SCHEMA = {
     "type": "object",
     "properties": {
         "metadata": {
-            "description": "Thông tin về file JD gốc và thời gian quét (Model sẽ để null nếu không có trong text)",
+            "description": "Information about the original JD file and scan time (Model should set to null if not found in text)",
             "type": "object",
             "properties": {
                 "jd_id": {"type": ["string", "null"], "format": "uuid"},
@@ -121,7 +121,7 @@ JD_SCHEMA = {
             }
         },
         "basic_info": {
-            "description": "Thông tin cơ bản định danh công việc",
+            "description": "Basic information identifying the job",
             "type": "object",
             "properties": {
                 "job_title": {"type": "string"},
@@ -135,7 +135,7 @@ JD_SCHEMA = {
             "required": ["job_title"]
         },
         "content": {
-            "description": "Nội dung văn bản chi tiết của JD",
+            "description": "Detailed text content of the JD",
             "type": "object",
             "properties": {
                 "summary": {"type": ["string", "null"]},
@@ -153,7 +153,7 @@ JD_SCHEMA = {
             }
         },
         "match_criteria": {
-            "description": "Các tiêu chí cốt lõi dùng để so khớp với CV",
+            "description": "Core criteria used for matching with CV",
             "type": "object",
             "properties": {
                 "experience": {

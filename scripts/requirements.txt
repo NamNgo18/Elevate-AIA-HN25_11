@@ -10,3 +10,5 @@ python-multipart
 SpeechRecognition
 gTTS
 sounddevice
+numpy
+scipy

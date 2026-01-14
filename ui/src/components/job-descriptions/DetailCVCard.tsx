@@ -24,101 +24,123 @@ interface DetailCVCardProps {
     onContact: (candidate: Candidate) => void;
 }
 
+import { useLanguage } from "@/contexts/LanguageContext";
+
 export function DetailCVCard({ candidate, onContact }: DetailCVCardProps) {
+    const { t } = useLanguage();
     const getScoreColor = (score: number) => {
-        if (score >= 90) return "bg-green-600";
-        if (score >= 80) return "bg-blue-600";
-        if (score >= 70) return "bg-yellow-600";
-        return "bg-gray-600";
+        if (score >= 90) return "from-green-500 to-emerald-600 shadow-green-500/20";
+        if (score >= 80) return "from-blue-500 to-indigo-600 shadow-blue-500/20";
+        if (score >= 70) return "from-yellow-500 to-orange-600 shadow-yellow-500/20";
+        return "from-slate-500 to-slate-600 shadow-slate-500/20";
     };
 
     return (
-        <Card className="shadow-lg border-2 border-indigo-100 max-w-md mx-auto">
-            <CardContent className="p-6 space-y-5">
+        <Card className="bg-white/5 border-white/10 shadow-2xl overflow-hidden rounded-3xl">
+            <CardContent className="p-8 space-y-8">
 
                 {/* 1. HEADER & SCORE */}
-                <div className="flex items-start justify-between border-b pb-4">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-6 border-b border-white/10">
                     <div className="flex-1">
-                        <h3 className="text-2xl font-bold text-gray-900">{candidate.name}</h3>
-                        <p className="text-md text-indigo-700 font-medium">{candidate.job_title}</p>
+                        <h3 className="text-3xl font-extrabold text-white mb-1">{candidate.name}</h3>
+                        <p className="text-lg text-purple-400 font-medium">{candidate.job_title}</p>
                     </div>
 
                     <Badge
-                        className={`${getScoreColor(candidate.match_score)} text-white text-lg px-4 py-2 font-extrabold`}
+                        className={`bg-gradient-to-r ${getScoreColor(candidate.match_score)} text-white text-xl px-6 py-3 font-black rounded-2xl shadow-lg border-0`}
                     >
                         {candidate.match_score}% Match
                     </Badge>
                 </div>
 
                 {/* 2. CONTACT & EXPLANATION */}
-                <div className="bg-gray-50 p-4 rounded-lg border">
-                    <h4 className="text-lg font-semibold text-gray-800 mb-2">Tóm tắt Đánh giá</h4>
-                    <p className="text-gray-700 italic border-l-4 border-yellow-400 pl-3 mb-4">
-                        {candidate.explanation}
-                    </p>
-
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between text-sm text-gray-600 space-y-2 sm:space-y-0">
-                        <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-2">
-                                <Mail className="h-4 w-4 text-indigo-500" />
-                                <span>{candidate.email}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Phone className="h-4 w-4 text-indigo-500" />
-                                <span>{candidate.phone_number}</span>
-                            </div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="lg:col-span-2 space-y-4">
+                        <h4 className="text-lg font-bold text-slate-300 flex items-center gap-2">
+                            <Target className="h-5 w-5 text-yellow-400" />
+                            {t("assessmentSummary")}
+                        </h4>
+                        <div className="bg-white/5 p-6 rounded-2xl border border-white/10 relative overflow-hidden group">
+                            <div className="absolute top-0 left-0 w-1 h-full bg-yellow-400" />
+                            <p className="text-slate-300 leading-relaxed italic relative z-10">
+                                "{candidate.explanation}"
+                            </p>
                         </div>
                     </div>
-                    <div className="flex flex-col sm:flex-row justify-between text-sm text-gray-600 space-y-2 sm:space-y-0">
-                        <div className="flex items-center gap-4">
-                            <Button onClick={() => onContact(candidate)}>
-                                Contact Candidate
-                            </Button>
+
+                    <div className="space-y-6">
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-3 group">
+                                <div className="h-10 w-10 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 group-hover:bg-blue-500/20 transition-colors">
+                                    <Mail className="h-5 w-5 text-blue-400" />
+                                </div>
+                                <span className="text-slate-300 font-medium truncate">{candidate.email && candidate.email !== "null" ? candidate.email : t("notProvided")}</span>
+                            </div>
+                            <div className="flex items-center gap-3 group">
+                                <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 group-hover:bg-emerald-500/20 transition-colors">
+                                    <Phone className="h-5 w-5 text-emerald-400" />
+                                </div>
+                                <span className="text-slate-300 font-medium truncate">{candidate.phone_number && candidate.phone_number !== "null" ? candidate.phone_number : t("notProvided")}</span>
+                            </div>
                         </div>
+
+                        <Button
+                            onClick={() => onContact(candidate)}
+                            className="w-full h-14 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white rounded-2xl font-bold shadow-lg shadow-purple-500/20 transition-all hover:scale-[1.02] active:scale-95"
+                        >
+                            <Mail className="mr-2 h-5 w-5" />
+                            {t("contactCandidate")}
+                        </Button>
                     </div>
                 </div>
 
                 {/* 3. CORE DETAILS (WORK, EDUCATION, SKILLS) */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
                     {/* Work / Experience */}
-                    <div>
-                        <h4 className="flex items-center gap-2 text-xl font-semibold text-indigo-700 border-b-2 border-indigo-200 pb-1 mb-3">
-                            <NotebookTabs className="h-5 w-5" /> Kinh nghiệm
+                    <div className="bg-white/5 p-6 rounded-2xl border border-white/10 hover:bg-white/10 transition-colors">
+                        <h4 className="flex items-center gap-3 text-xl font-bold text-blue-400 mb-4">
+                            <NotebookTabs className="h-6 w-6" /> {t("experience")}
                         </h4>
-                        <p className="text-gray-700 whitespace-pre-wrap">{candidate.work || "N/A"}</p>
+                        <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">
+                            {candidate.work && candidate.work !== "null" ? candidate.work : t("notProvided")}
+                        </p>
                     </div>
 
                     {/* Education */}
-                    <div>
-                        <h4 className="flex items-center gap-2 text-xl font-semibold text-indigo-700 border-b-2 border-indigo-200 pb-1 mb-3">
-                            <BookOpenText className="h-5 w-5" /> Học vấn
+                    <div className="bg-white/5 p-6 rounded-2xl border border-white/10 hover:bg-white/10 transition-colors">
+                        <h4 className="flex items-center gap-3 text-xl font-bold text-cyan-400 mb-4">
+                            <BookOpenText className="h-6 w-6" /> {t("education")}
                         </h4>
-                        <p className="text-gray-700 whitespace-pre-wrap">{candidate.education || "N/A"}</p>
+                        <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">
+                            {candidate.education && candidate.education !== "null" ? candidate.education : t("notProvided")}
+                        </p>
                     </div>
 
                     {/* Skills */}
-                    <div>
-                        <h4 className="flex items-center gap-2 text-xl font-semibold text-indigo-700 border-b-2 border-indigo-200 pb-1 mb-3">
-                            <Target className="h-5 w-5" /> Kỹ năng
+                    <div className="bg-white/5 p-6 rounded-2xl border border-white/10 hover:bg-white/10 transition-colors">
+                        <h4 className="flex items-center gap-3 text-xl font-bold text-indigo-400 mb-4">
+                            <Target className="h-6 w-6" /> {t("skills")}
                         </h4>
-                        <p className="text-gray-700 whitespace-pre-wrap">{candidate.skills || "N/A"}</p>
+                        <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">
+                            {candidate.skills && candidate.skills !== "null" ? candidate.skills : t("notProvided")}
+                        </p>
                     </div>
 
                     {/* Missing Skills */}
-                    <div>
-                        <h4 className="flex items-center gap-2 text-xl font-semibold text-red-600 border-b-2 border-red-200 pb-1 mb-3">
-                            <Award className="h-5 w-5" /> Kỹ năng còn thiếu
+                    <div className="bg-red-500/5 p-6 rounded-2xl border border-red-500/20 hover:bg-red-500/10 transition-colors">
+                        <h4 className="flex items-center gap-3 text-xl font-bold text-red-400 mb-4">
+                            <Award className="h-6 w-6" /> {t("missingSkills")}
                         </h4>
                         {candidate.missing_skills && candidate.missing_skills.length > 0 ? (
                             <div className="flex flex-wrap gap-2">
                                 {candidate.missing_skills.map((skill, index) => (
-                                    <Badge key={index} variant="destructive" className="bg-red-100 text-red-800">
+                                    <Badge key={index} variant="destructive" className="bg-red-500/20 text-red-300 border border-red-500/30 font-semibold px-3 py-1.5 rounded-xl">
                                         {skill}
                                     </Badge>
                                 ))}
                             </div>
                         ) : (
-                            <p className="text-gray-500">Không có kỹ năng quan trọng nào bị thiếu.</p>
+                            <p className="text-slate-500 text-sm font-medium italic">{t("noMissingSkills")}</p>
                         )}
                     </div>
                 </div>

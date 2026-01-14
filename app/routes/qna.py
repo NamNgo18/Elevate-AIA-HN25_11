@@ -61,15 +61,12 @@ async def handle_interview_begin_session(param_in: InterviewStartRequest):
 #       Process Interview Answer
 # =======================================
 @router.post("/answer")
-def handle_interview_answer_submission(param_in: InterviewAnswerRequest):
+async def handle_interview_answer_submission(param_in: InterviewAnswerRequest):
     """
     Submit answer for the current question in the interview session
     """
-    qna_session_mgr = qna_smgr.SessionManager().get_session(param_in.session_id)
-    if not qna_session_mgr:
-        app_logger.error(f"Session ID {param_in.session_id} not found.")
-        return JSONResponse(content = result, status_code = status.HTTP_404_NOT_FOUND)
-
+    # Initialize logger and result dict FIRST to avoid undefined variable bugs
+    app_logger = LoggingManager().get_logger("AppLogger")
     result: dict = {
         "role": "ai",
         "reply": None,
@@ -80,23 +77,27 @@ def handle_interview_answer_submission(param_in: InterviewAnswerRequest):
         "error": None
     }
 
-    app_logger = LoggingManager().get_logger("AppLogger")
+    qna_session_mgr = qna_smgr.SessionManager().get_session(param_in.session_id)
+    if not qna_session_mgr:
+        result["error"] = f"Session ID {param_in.session_id} not found."
+        app_logger.error(result["error"])
+        return JSONResponse(content = result, status_code = status.HTTP_404_NOT_FOUND)
     app_logger.info(f"Submitting answer for session_id: {param_in.session_id}")
     if qna_session_mgr["phase"] == qna_smgr.SessionPhase.UNKNOWN:
         svc_resp = qna_svc.handle_start_interview(param_in.session_id, param_in.answer)
         err_msg = "Failed to start interview session or generate questions bank"
     elif qna_session_mgr["phase"] == qna_smgr.SessionPhase.INTRO:
-        svc_resp = qna_svc.handle_readniess_interview(param_in.session_id, param_in.answer)
-        err_msg = "Failed to ask the candidate's readniess"
+        svc_resp = qna_svc.handle_readiness_interview(param_in.session_id, param_in.answer)
+        err_msg = "Failed to ask the candidate's readiness"
     elif qna_session_mgr["phase"] == qna_smgr.SessionPhase.READINESS:
-        svc_resp = qna_svc.handle_readniess_interview(param_in.session_id, param_in.answer)
-        err_msg = "Failed to evaluate the candidate's readniess"
+        svc_resp = qna_svc.handle_readiness_interview(param_in.session_id, param_in.answer)
+        err_msg = "Failed to evaluate the candidate's readiness"
     elif qna_session_mgr["phase"] == qna_smgr.SessionPhase.INTERVIEW:
         svc_resp = qna_svc.handle_qna_interview(param_in.session_id, param_in.answer)
-        err_msg = "Failed to continious the candidate's interview"
+        err_msg = "Failed to continue the candidate's interview"
     elif qna_session_mgr["phase"] == qna_smgr.SessionPhase.WARMUP:
         svc_resp = qna_svc.handle_warmup_interview(param_in.session_id, param_in.answer)
-        err_msg = "Failed to continious the candidate's warm-up"
+        err_msg = "Failed to continue the candidate's warm-up"
     else:
         result["error"] = f"UNKNOWN the phase for interviewing session ID: {param_in.session_id}"
         return JSONResponse(content = result, status_code = status.HTTP_404_NOT_FOUND)
@@ -114,15 +115,12 @@ def handle_interview_answer_submission(param_in: InterviewAnswerRequest):
 #       Terminate Interview Session
 # =======================================
 @router.delete("/interview")
-def handle_terminate_interview_session(session_id: str = None):
+async def handle_terminate_interview_session(session_id: str = None):
     """
     Delete interview session
     """
-    qna_session_mgr = qna_smgr.SessionManager().get_session(session_id)
-    if not qna_session_mgr:
-        app_logger.error(f"Session ID {session_id} not found.")
-        return JSONResponse(content = result, status_code = status.HTTP_400_BAD_REQUEST)
-
+    # Initialize logger and result dict FIRST to avoid undefined variable bugs
+    app_logger = LoggingManager().get_logger("AppLogger")
     result: dict = {
         "role": "ai",
         "reply": None,
@@ -130,7 +128,11 @@ def handle_terminate_interview_session(session_id: str = None):
         "error": None
     }
 
-    app_logger = LoggingManager().get_logger("AppLogger")
+    qna_session_mgr = qna_smgr.SessionManager().get_session(session_id)
+    if not qna_session_mgr:
+        result["error"] = f"Session ID {session_id} not found."
+        app_logger.error(result["error"])
+        return JSONResponse(content = result, status_code = status.HTTP_400_BAD_REQUEST)
     app_logger.info(f"Deleting interview session for session_id: {session_id}")
     deleted = qna_smgr.SessionManager().delete_session(session_id)
     result["deleted"] = deleted

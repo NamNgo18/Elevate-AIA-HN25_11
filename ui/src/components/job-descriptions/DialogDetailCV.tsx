@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getApiUrl } from "@/lib/api";
 import {
     Dialog,
     DialogContent,
@@ -8,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { DetailCVCard } from "./DetailCVCard";
-import { Loader2 } from "lucide-react";
+import { Loader2, NotebookTabs } from "lucide-react";
 
 // --- INTERFACE DECLARATIONS ---
 
@@ -44,12 +45,15 @@ interface NotificationState {
 
 // --- MAIN COMPONENT ---
 
+import { useLanguage } from "@/contexts/LanguageContext";
+
 export function DialogDetailCV({
     jdId,
     open,
     onOpenChange,
     Candidate,
 }: DialogDetailCVProps) {
+    const { t, language } = useLanguage();
     // Main states
     const [candidateData, setCandidateData] = useState<CandidateResult | null>(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -91,8 +95,8 @@ export function DialogDetailCV({
         if (!receiver) {
             setNotification({
                 open: true,
-                title: "Missing Email Error",
-                description: "Candidate's email address not found.",
+                title: t("error"),
+                description: t("error"), // Fallback if no specific key
                 isError: true,
             });
             return;
@@ -102,8 +106,8 @@ export function DialogDetailCV({
         if (!cv_id || !jd_id) {
             setNotification({
                 open: true,
-                title: "Missing Data Error",
-                description: "Insufficient CV or JD ID to create interview link. Please check candidate data.",
+                title: t("error"),
+                description: t("failedToDownload"),
                 isError: true,
             });
             return;
@@ -113,8 +117,8 @@ export function DialogDetailCV({
         setIsLoading(true);
         setError(null);
 
-        // Construct URL with all 3 parameters
-        const url = `http://127.0.0.1:8000/api/send_confirmation?receiver=${receiver}&cv_id=${cv_id}&jd_id=${jd_id}`;
+        // Construct URL with all 4 parameters
+        const url = getApiUrl(`api/send_confirmation?receiver=${receiver}&cv_id=${cv_id}&jd_id=${jd_id}&lang=${language}`);
 
         try {
             const response = await fetch(url, {
@@ -127,21 +131,21 @@ export function DialogDetailCV({
             const data = await response.json();
 
             if (response.ok) {
-                const successMessage = data.message || "Email sent successfully!";
+                const successMessage = data.message || t("success");
 
                 setNotification({
                     open: true,
-                    title: "Email Sent Successfully",
+                    title: t("success"),
                     description: successMessage,
                     isError: false,
                 });
                 return successMessage;
             } else {
-                const errorMessage = data.error || "Unknown error from Server.";
+                const errorMessage = data.error || t("error");
 
                 setNotification({
                     open: true,
-                    title: "Email Sending Error",
+                    title: t("error"),
                     description: `Details: ${errorMessage}`,
                     isError: true,
                 });
@@ -149,11 +153,11 @@ export function DialogDetailCV({
             }
 
         } catch (error) {
-            const connectionError = "Network connection error or unable to process response from server.";
+            const connectionError = t("error");
 
             setNotification({
                 open: true,
-                title: "System Error",
+                title: t("error"),
                 description: connectionError,
                 isError: true,
             });
@@ -172,8 +176,8 @@ export function DialogDetailCV({
         if (!email) {
             setNotification({
                 open: true,
-                title: "Missing Email Error",
-                description: "No candidate email available to send.",
+                title: t("error"),
+                description: t("error"),
                 isError: true,
             });
             return;
@@ -193,39 +197,54 @@ export function DialogDetailCV({
         <>
             {/* 1. MAIN DIALOG (CV Details) */}
             <Dialog open={open} onOpenChange={onOpenChange}>
-                <DialogContent className="max-h-[80vh] max-w-4xl p-0">
-                    <div className="p-6">
+                <DialogContent
+                    className="max-h-[90vh] w-[60vw] max-w-[60vw] bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border-white/20 p-0 overflow-hidden shadow-2xl"
+                    style={{ width: '60vw', maxWidth: '60vw' }}
+                >
+                    <div className="p-8 border-b border-white/10 bg-white/5 backdrop-blur-xl">
                         <DialogHeader>
-                            <DialogTitle>Suitable Candidates</DialogTitle>
-                            <DialogDescription>
-                                {candidateData
-                                    ? `Candidate's information: ${candidateData.name}`
-                                    : "Top candidate matches"}
-                            </DialogDescription>
+                            <div className="flex items-center gap-4 mb-2">
+                                <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center border border-blue-500/30">
+                                    <NotebookTabs className="h-6 w-6 text-blue-400" />
+                                </div>
+                                <div>
+                                    <DialogTitle className="text-2xl font-bold text-white">{t("suitableCandidates")}</DialogTitle>
+                                    <DialogDescription className="text-slate-400 mt-1">
+                                        {candidateData
+                                            ? `${t("candidateInfo")} ${candidateData.name}`
+                                            : t("suitableCandidates")}
+                                    </DialogDescription>
+                                </div>
+                            </div>
                         </DialogHeader>
                     </div>
 
-                    <ScrollArea className="h-[500px] px-6 pb-6">
-                        <div className="space-y-4">
+                    <ScrollArea className="h-[65vh] p-8">
+                        <div className="space-y-6">
                             {isLoading ? (
-                                <div className="flex items-center justify-center h-[500px]">
-                                    <Loader2 className="mr-2 h-8 w-8 animate-spin" />
-                                    <span className="text-lg">Processing request...</span>
+                                <div className="flex flex-col items-center justify-center h-64">
+                                    <div className="relative">
+                                        <div className="h-16 w-16 rounded-full border-4 border-blue-500/10 border-t-blue-500 animate-spin" />
+                                        <Loader2 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-6 w-6 text-blue-400 animate-bounce" />
+                                    </div>
+                                    <span className="text-xl font-medium text-slate-300 mt-6">{t("processing")}</span>
                                 </div>
                             ) : error ? (
-                                <div className="text-center text-red-500 p-4 border border-red-500 rounded">
+                                <div className="flex flex-col items-center justify-center h-64 bg-red-500/5 rounded-3xl border border-red-500/20 p-8 text-center text-red-400">
                                     {error}
                                 </div>
                             ) : !candidateData ? (
-                                <div className="text-center text-gray-500 p-4">
-                                    No suitable candidates found for this job.
+                                <div className="flex flex-col items-center justify-center h-64 bg-white/5 rounded-3xl border border-white/10 border-dashed p-8 text-center text-slate-400">
+                                    {t("noCandidatesFound")}
                                 </div>
                             ) : (
                                 // Render DetailCVCard
-                                <DetailCVCard
-                                    candidate={candidateData}
-                                    onContact={handleContact}
-                                />
+                                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                    <DetailCVCard
+                                        candidate={candidateData}
+                                        onContact={handleContact}
+                                    />
+                                </div>
                             )}
                         </div>
                     </ScrollArea>

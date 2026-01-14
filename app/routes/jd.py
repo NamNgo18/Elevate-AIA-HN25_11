@@ -1,10 +1,10 @@
 
-
 from fastapi import APIRouter, HTTPException, File, UploadFile
 from starlette.responses import FileResponse
 from ..utilities.log_manager import LoggingManager
 from ..services import job_description_service as jd_service
 import os
+import json
 
 router = APIRouter()
 
@@ -18,6 +18,22 @@ def get_all_jds():
         return {"data": jds}
     except Exception as e:
         app_logger.error(f"Error in get_all_jds: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@router.get(path="/{id}/analysis", summary="Get JD Analysis")
+def get_jd_analysis(id: str):
+    """ Get JD analysis JSON data for a given JD ID."""
+    app_logger = LoggingManager().get_logger("AppLogger")
+    app_logger.debug(f"GET request for JD analysis ID: {id}")
+    try:
+        json_data = jd_service.get_analysis_by_id(id)
+        return json_data
+    except FileNotFoundError as e:
+        app_logger.warn(f"Analysis file not found for ID {id}: {e}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        app_logger.error(f"Error in get_jd_analysis: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 

@@ -124,7 +124,7 @@ Required:
 # =======================================
 #       Process Interview Answer
 # =======================================
-def handle_readniess_interview(session_id: str = None, user_prompt: str = None) -> str | list:
+def handle_readiness_interview(session_id: str = None, user_prompt: str = None) -> str | list:
     app_logger = LoggingManager().get_logger("AppLogger")
     qna_session_mgr = SessionManager().get_session(session_id)
     if not qna_session_mgr:
@@ -186,7 +186,7 @@ Response as:
         return ai_response["msg_text"]
 
     app_logger.info(f"\n\n\nREPLY: {ai_resp_func}\nPHASE: {qna_session_mgr['phase']}\n")
-    ai_reply_text: list = [ai_resp_func.get("text", "There're somethings wrong why readniess!")]
+    ai_reply_text: list = [ai_resp_func.get("text", "There's something wrong with readiness!")]
     # Save the chat history for using later
     qna_session_mgr["conversation_history"].append({
         "role": "user",
@@ -279,7 +279,7 @@ Instructions:
         return ai_response["msg_text"]
 
     app_logger.info(f"\n\n\nREPLY: {ai_resp_func}\nPHASE: {qna_session_mgr['phase']}\n")
-    ai_reply_text: list = [ai_resp_func.get("text", "There're somethings wrong why readniess!")]
+    ai_reply_text: list = [ai_resp_func.get("text", "There's something wrong with the interview!")]
     # Save the chat history for using later
     qna_session_mgr["conversation_history"].append({
         "role": "user",
@@ -356,7 +356,7 @@ Instructions:
         return ai_response["msg_text"]
 
     app_logger.info(f"\n\n\nREPLY: {ai_resp_func}\nPHASE: {qna_session_mgr['phase']}\n")
-    ai_reply_text: list = [ai_resp_func.get("text", "There're somethings wrong why readniess!")]
+    ai_reply_text: list = [ai_resp_func.get("text", "There's something wrong with the warmup!")]
     if ai_resp_func["complete_interview"]:
         app_logger.info(f"Completely interview done!")
     elif ai_resp_func["followup_needed"]:
@@ -375,6 +375,7 @@ Instructions:
 
 # =======================================
 def handle_build_interview_summary(session_id: str = None) -> dict:
+    app_logger = LoggingManager().get_logger("AppLogger")
     qna_session_mgr = SessionManager().get_session(session_id)
     if not qna_session_mgr:
         app_logger.error(f"Session ID {session_id} not found.")
@@ -389,11 +390,13 @@ def handle_build_interview_summary(session_id: str = None) -> dict:
         },
         "conversation_history": []
     }
-    app_logger = LoggingManager().get_logger("AppLogger")
-    resume["candidate"]["name"] = qna_session_mgr["cv_meta"].get("basics", {}).get("name", "Unknown")
-    resume["candidate"]["target_position"] = qna_session_mgr["jd_meta"].get("basic_info", {}).get("job_title", "Job title not available")
-    resume["candidate"]["contact_phone"] = qna_session_mgr["cv_meta"].get("basics", {}).get("phone", "Unknown")
-    resume["candidate"]["email_address"] = qna_session_mgr["cv_meta"].get("basics", {}).get("email", "Unknown")
+    cv_meta = qna_session_mgr.get("cv_meta") or {}
+    jd_meta = qna_session_mgr.get("jd_meta") or {}
+    
+    resume["candidate"]["name"] = cv_meta.get("basics", {}).get("name", "Unknown")
+    resume["candidate"]["target_position"] = jd_meta.get("basic_info", {}).get("job_title", "Job title not available")
+    resume["candidate"]["contact_phone"] = cv_meta.get("basics", {}).get("phone", "Unknown")
+    resume["candidate"]["email_address"] = cv_meta.get("basics", {}).get("email", "Unknown")
     # Remove the system prompt
     resume["conversation_history"] = qna_session_mgr["conversation_history"][1:]
 

@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { getApiUrl } from "@/lib/api";
 import {
   Dialog,
   DialogContent,
@@ -15,11 +16,14 @@ interface UploadCVDialogProps {
   onUploadSuccess: (fileName: string) => void;
 }
 
+import { useLanguage } from "@/contexts/LanguageContext";
+
 export function UploadCVDialog({
   open,
   onOpenChange,
   onUploadSuccess,
 }: UploadCVDialogProps) {
+  const { t } = useLanguage();
   const [dragActive, setDragActive] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -44,14 +48,14 @@ export function UploadCVDialog({
       if (
         file.type === "application/pdf" ||
         file.type ===
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
       ) {
         setUploadedFile(file);
       } else {
-        alert("Please upload only PDF or DOCX files");
+        alert(t("pdfDocxOnly"));
       }
     }
-  }, []);
+  }, [t]);
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -59,11 +63,11 @@ export function UploadCVDialog({
       if (
         file.type === "application/pdf" ||
         file.type ===
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
       ) {
         setUploadedFile(file);
       } else {
-        alert("Please upload only PDF or DOCX files");
+        alert(t("pdfDocxOnly"));
       }
     }
   };
@@ -75,16 +79,18 @@ export function UploadCVDialog({
       const formData = new FormData();
       formData.append("file", uploadedFile);
 
-      const response = await fetch("http://127.0.0.1:8000/routes/cv", {
+      const response = await fetch(getApiUrl("routes/cv"), {
         method: "POST",
         body: formData,
       });
       if (!response.ok) {
-        alert("Failed to upload file");
+        alert(t("failedToUpload"));
+        setIsLoading(false);
         return;
       }
       onUploadSuccess(uploadedFile.name);
       setUploadedFile(null);
+      setIsLoading(false);
       onOpenChange(false);
     }
   };
@@ -98,19 +104,18 @@ export function UploadCVDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Upload New CV</DialogTitle>
+          <DialogTitle>{t("uploadCVTitle")}</DialogTitle>
           <DialogDescription>
-            Upload a cv document to start finding candidates
+            {t("uploadCVDesc")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
           <div
-            className={`relative rounded-lg border-2 border-dashed p-12 text-center transition-colors ${
-              dragActive
-                ? "border-blue-500 bg-blue-50"
-                : "border-gray-300 bg-gray-50"
-            }`}
+            className={`relative rounded-lg border-2 border-dashed p-12 text-center transition-colors ${dragActive
+              ? "border-blue-500 bg-blue-50"
+              : "border-gray-300 bg-gray-50"
+              }`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
             onDragOver={handleDrag}
@@ -139,9 +144,9 @@ export function UploadCVDialog({
               <>
                 <Upload className="mx-auto mb-4 h-12 w-12 text-gray-400" />
                 <p className="mb-2 text-gray-700">
-                  Drag and drop your file here, or click to browse
+                  {t("dropFiles")}
                 </p>
-                <p className="text-gray-500">Supports PDF and DOCX files</p>
+                <p className="text-gray-500">{t("supportFiles")}</p>
                 <input
                   type="file"
                   accept=".pdf,.docx"
@@ -154,33 +159,33 @@ export function UploadCVDialog({
 
           <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
             <h3 className="mb-3 text-blue-900">
-              Best Practices for CV Scanning
+              {t("cvBestPracticesTitle")}
             </h3>
             <ul className="space-y-2 text-blue-800">
               <li className="flex items-start gap-2">
                 <span className="mt-1 text-blue-600">•</span>
-                <span>Use clear and standard section headings.</span>
+                <span>{t("cvBestPractice1")}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-1 text-blue-600">•</span>
-                <span>Save your CV as a PDF or DOCX file.</span>
+                <span>{t("cvBestPractice2")}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-1 text-blue-600">•</span>
-                <span>Avoid using images, charts, or tables.</span>
+                <span>{t("cvBestPractice3")}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-1 text-blue-600">•</span>
-                <span>Keep formatting simple for easy text extraction.</span>
+                <span>{t("cvBestPractice4")}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-1 text-blue-600">•</span>
-                <span>Include relevant keywords from the job description.</span>
+                <span>{t("cvBestPractice5")}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-1 text-blue-600">•</span>
                 <span>
-                  Avoid images or complex layouts for better text extraction
+                  {t("cvBestPractice6")}
                 </span>
               </li>
             </ul>
@@ -188,13 +193,13 @@ export function UploadCVDialog({
 
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={handleClose}>
-              Cancel
+              {t("cancel")}
             </Button>
             <Button
               onClick={handleUpload}
               disabled={!uploadedFile || isLoading}
             >
-              {isLoading ? "Uploading..." : "Upload CV"}
+              {isLoading ? t("uploading") : t("uploadCV")}
             </Button>
           </div>
         </div>

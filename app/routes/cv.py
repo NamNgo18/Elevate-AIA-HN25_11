@@ -1,10 +1,10 @@
 
-
 from fastapi import APIRouter, HTTPException, File, UploadFile
 from starlette.responses import FileResponse
 from ..utilities.log_manager import LoggingManager
 from ..services import cv_service as cv_service
 import os
+import json
 
 router = APIRouter()
 
@@ -18,6 +18,22 @@ def get_all_cvs():
         return {"data": cvs}
     except Exception as e:
         app_logger.error(f"Error in get_all_cvs: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@router.get(path="/{id}/analysis", summary="Get CV Analysis")
+def get_cv_analysis(id: str):
+    """ Get CV analysis JSON data for a given CV ID."""
+    app_logger = LoggingManager().get_logger("AppLogger")
+    app_logger.debug(f"GET request for CV analysis ID: {id}")
+    try:
+        json_data = cv_service.get_analysis_by_id(id)
+        return json_data
+    except FileNotFoundError as e:
+        app_logger.warn(f"Analysis file not found for ID {id}: {e}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        app_logger.error(f"Error in get_cv_analysis: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 

@@ -12,6 +12,7 @@ export interface InterviewSummary {
   experience: number;
   pros: string[];
   cons: string[];
+  summary?: string;
 }
 
 export interface CandidateData {

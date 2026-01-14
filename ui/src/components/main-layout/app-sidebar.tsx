@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Mic, FileUser, BriefcaseBusiness } from "lucide-react";
+import { Mic, FileUser, BriefcaseBusiness, Bot, ClipboardList } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 import { NavMain } from "@/components/main-layout/nav-main";
 import { NavUser } from "@/components/main-layout/nav-user";
@@ -11,50 +12,83 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { TeamSwitcher } from "./team-switcher";
+import { cn } from "@/lib/utils";
 
-// This is sample data.
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  teams: [
-    {
-      name: "AI IPB",
-      logo: Mic,
-      plan: "AI Interview Practice Bot",
-    },
-  ],
-  navMain: [
-    {
-      title: "CV",
-      url: "/cv",
-      icon: FileUser,
-      isActive: true,
-    },
-    {
-      title: "Job Descriptions",
-      url: "job-descriptions",
-      icon: BriefcaseBusiness,
-    },
-  ],
-};
+import { useLanguage } from "@/contexts/LanguageContext";
+import { Languages } from "lucide-react";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { t, language, setLanguage } = useLanguage();
+  const { state } = useSidebar();
+  const isCollapsed = state === "collapsed";
+
+  const data = {
+    teams: [
+      {
+        name: "AI-X HR",
+        logo: Bot,
+        plan: t("aiHRAssistant"),
+      },
+    ],
+    navMain: [
+      {
+        title: t("cv"),
+        url: "/cv",
+        icon: FileUser,
+      },
+      {
+        title: t("jobDescriptions"),
+        url: "/job-descriptions",
+        icon: BriefcaseBusiness,
+      },
+      {
+        title: t("interviewReports"),
+        url: "/interview-reports",
+        icon: ClipboardList,
+      },
+    ],
+  };
+
   return (
-    <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
+    <Sidebar collapsible="icon" {...props} className="border-r border-white/5">
+      <SidebarHeader className="py-6 px-4">
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="px-2">
         <NavMain items={data.navMain} />
       </SidebarContent>
-      {/* <SidebarFooter>
-        <NavUser user={data.user} />
-      </SidebarFooter> */}
+      <SidebarFooter className="p-4">
+        <div className={cn(
+          "flex items-center gap-1 p-1 bg-sidebar-accent/50 rounded-xl transition-all duration-300",
+          isCollapsed ? "flex-col" : "flex-row"
+        )}>
+          <Button
+            variant={language === "en" ? "secondary" : "ghost"}
+            size="sm"
+            onClick={() => setLanguage("en")}
+            className={cn(
+              "flex-1 text-[10px] font-bold h-7 rounded-lg transition-all",
+              language === "en" && "shadow-sm bg-white/10 text-white"
+            )}
+          >
+            EN
+          </Button>
+          <Button
+            variant={language === "vi" ? "secondary" : "ghost"}
+            size="sm"
+            onClick={() => setLanguage("vi")}
+            className={cn(
+              "flex-1 text-[10px] font-bold h-7 rounded-lg transition-all",
+              language === "vi" && "shadow-sm bg-white/10 text-white"
+            )}
+          >
+            VI
+          </Button>
+        </div>
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );

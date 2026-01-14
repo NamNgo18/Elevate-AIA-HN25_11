@@ -6,32 +6,51 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-SMTP_SERVER = os.getenv("SMTP_SERVER")             # Server SMTP của Gmail
-SMTP_PORT = os.getenv("SMTP_PORT")                 # Port cho kết nối SSL
-SENDER_EMAIL = os.getenv("SENDER_EMAIL")
-SENDER_PASSWORD = os.getenv("SENDER_PASSWORD")     # Mật khẩu ứng dụng (App Password)
-
 def send_email_with_smtp(receiver_email, subject, body_content):
     """
-    Hàm gửi email sử dụng smtplib qua SMTP của Gmail (SSL).
+    Hàm gửi email sử dụng smtplib. Tự động chọn SSL hoặc STARTTLS dựa trên port.
     """
+    load_dotenv()
+    smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+    smtp_port = int(os.getenv("SMTP_PORT", 465))
+    sender_email = os.getenv("SENDER_EMAIL")
+    sender_password = os.getenv("SENDER_PASSWORD")
+
+    if not sender_email or not sender_password:
+        print("Lỗi: SENDER_EMAIL hoặc SENDER_PASSWORD chưa được cấu hình trong .env")
+        return False
+
     msg = EmailMessage()
     msg['Subject'] = subject
-    msg['From'] = SENDER_EMAIL
+    msg['From'] = sender_email
     msg['To'] = receiver_email
     msg.set_content(body_content)
 
-    context = ssl.create_default_context()
-
     try:
-        with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT, context=context) as server:
-            server.login(SENDER_EMAIL, SENDER_PASSWORD)
-            
-            server.send_message(msg)
+        print(f"Đang kết nối tới {smtp_server}:{smtp_port}...")
+        
+        # Sử dụng SSL cho port 465
+        if smtp_port == 465:
+            context = ssl.create_default_context()
+            with smtplib.SMTP_SSL(smtp_server, smtp_port, context=context) as server:
+                server.login(sender_email, sender_password)
+                server.send_message(msg)
+        # Sử dụng STARTTLS cho các port khác (thường là 587)
+        else:
+            with smtplib.SMTP(smtp_server, smtp_port) as server:
+                server.ehlo()
+                if smtp_port == 587:
+                    context = ssl.create_default_context()
+                    server.starttls(context=context)
+                    server.ehlo()
+                server.login(sender_email, sender_password)
+                server.send_message(msg)
         
         print(f"Gửi email thành công tới: {receiver_email}")
         return True
     
     except Exception as e:
         print(f"Lỗi khi gửi email: {e}")
+        import traceback
+        traceback.print_exc()
         return False

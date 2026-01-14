@@ -7,8 +7,7 @@ import { fonts } from "@/lib/fonts";
 import { siteConfig } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
 
-import { AppSidebar } from "@/components/main-layout/app-sidebar";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { LayoutWrapper } from "@/components/main-layout/layout-wrapper";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -40,20 +39,19 @@ export const metadata: Metadata = {
   },
 };
 
+import { LanguageProvider } from "@/contexts/LanguageContext";
+
 const RootLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={cn("min-h-screen font-sans", fonts)}>
-        <ThemeProvider attribute="class">
-          <SidebarProvider>
-            <AppSidebar />
-            <SidebarInset>
-              <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-                {children}
-              </div>
-            </SidebarInset>
-          </SidebarProvider>
-        </ThemeProvider>
+        <LanguageProvider>
+          <ThemeProvider attribute="class">
+            <LayoutWrapper>
+              {children}
+            </LayoutWrapper>
+          </ThemeProvider>
+        </LanguageProvider>
       </body>
     </html>
   );
